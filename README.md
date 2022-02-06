@@ -12,3 +12,6 @@ A group system for pocketmine servers.
 ## Features
 - **Customizable** Messages
 
+## Issues / Ideas / Feedback
+
+- **[Create an Issue](https://github.com/r3pt1s/GroupSystem/issues/new)**
