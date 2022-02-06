@@ -1,5 +1,5 @@
 name: GroupSystem
-version: 1.0
+version: 1.0.0
 api: 4.0.0
 main: GroupSystem\GroupSystem
 author: r3pt1s
