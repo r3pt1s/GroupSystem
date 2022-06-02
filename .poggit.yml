@@ -1,0 +1,8 @@
+--- # Poggit-CI Manifest. Open the CI at https://poggit.pmmp.io/ci/r3pt1s/GroupSystem
+build-by-default: true
+branches:
+- main
+projects:
+  GroupSystem:
+    path: ""
+...
