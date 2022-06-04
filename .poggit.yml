@@ -1,8 +1,11 @@
 --- # Poggit-CI Manifest. Open the CI at https://poggit.pmmp.io/ci/r3pt1s/GroupSystem
 build-by-default: true
 branches:
-- main
+  - v2
 projects:
   GroupSystem:
     path: ""
+    libs:
+      - src: dktapps-pm-pl/pmforms/pmforms
+        version: ^2.0.0
 ...
