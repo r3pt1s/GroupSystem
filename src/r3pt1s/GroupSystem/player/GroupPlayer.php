@@ -72,6 +72,6 @@ class GroupPlayer {
     }
 
     public function getPlayer(): ?Player {
-        return Server::getInstance()->getPlayerByPrefix($this->name);
+        return Server::getInstance()->getPlayerExact($this->name);
     }
 }
