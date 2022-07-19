@@ -1,0 +1,11 @@
+DefaultGroup: Player
+Update-Check: true
+# Example: /home/GroupSystem/
+# Default: plugin_data/GroupSystem/
+Groups-Path: default
+# Example: /home/GroupSystem/players/
+# Default: plugin_data/GroupSystem/players/
+Players-Path: default
+# Example: /home/GroupSystem/
+# Default: plugin_data/GroupSystem/
+Messages-Path: default
