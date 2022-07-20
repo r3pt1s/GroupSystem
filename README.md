@@ -1,4 +1,4 @@
-# GroupSystem [![](https://poggit.pmmp.io/shield.state/GroupSystem)](https://poggit.pmmp.io/p/GroupSystem)
+# [GroupSystem](https://poggit.pmmp.io/p/GroupSystem) [![](https://poggit.pmmp.io/shield.dl/GroupSystem)](https://poggit.pmmp.io/p/GroupSystem) [![](https://poggit.pmmp.io/shield.dl.total/GroupSystem)](https://poggit.pmmp.io/p/GroupSystem)
 
 ## Features
 - **Full-Custom** Messages
