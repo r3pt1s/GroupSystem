@@ -2,7 +2,7 @@
 
 ## Features
 - **Full-Custom** Messages
-- **Time**-Ranks
+- **Temporary**-Ranks
 - **Custom** Paths
 - **ScoreHud** Support
 - **Update** Checker
