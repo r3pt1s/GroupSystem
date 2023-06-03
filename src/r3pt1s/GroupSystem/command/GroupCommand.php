@@ -20,7 +20,7 @@ class GroupCommand extends Command implements PluginOwned {
 
     public function execute(CommandSender $sender, string $commandLabel, array $args): bool {
         if ($sender instanceof Player) {
-            if ($sender->hasPermission($this->getPermission())) {
+            if ($this->testPermissionSilent($sender)) {
                 $sender->sendForm(new MainForm());
             } else {
                 $sender->sendMessage(Utils::parse("no_perms"));

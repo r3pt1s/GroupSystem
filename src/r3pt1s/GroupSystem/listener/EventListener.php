@@ -2,6 +2,7 @@
 
 namespace r3pt1s\GroupSystem\listener;
 
+use pocketmine\player\chat\LegacyRawChatFormatter;
 use r3pt1s\GroupSystem\event\GroupEditEvent;
 use r3pt1s\GroupSystem\event\GroupRemoveEvent;
 use r3pt1s\GroupSystem\event\GroupSetEvent;
@@ -38,7 +39,9 @@ class EventListener implements Listener {
 
     public function onChat(PlayerChatEvent $event) {
         if ($event->isCancelled()) return;
-        $event->setFormat(str_replace(["{name}", "{msg}", "{message}"], [$event->getPlayer()->getName(), $event->getMessage(), $event->getMessage()], PlayerGroupManager::getInstance()->getGroup($event->getPlayer()->getName())->getGroup()->getChatFormat()));
+        $event->setFormatter(new LegacyRawChatFormatter(
+            str_replace(["{name}", "{msg}", "{message}"], [$event->getPlayer()->getName(), $event->getMessage(), $event->getMessage()], PlayerGroupManager::getInstance()->getGroup($event->getPlayer()->getName())->getGroup()->getChatFormat())
+        ));
     }
 
     public function onSet(GroupSetEvent $event) {
