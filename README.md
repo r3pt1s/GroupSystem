@@ -145,4 +145,3 @@ see_available_group_text: '§7Name: §e{%0}{line}§r§7NameTag: §e{%1}{line}§r
   §e{%2}{line}§r§7ChatFormat: §e{%3}{line}§r§7Permissions:{line}§e{%4}'
 see_available_group_back: §4Back
 ```
-```
