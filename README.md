@@ -6,6 +6,7 @@
 - **Custom** Paths
 - **ScoreHud** Support
 - **Update** Checker
+- **MySQL** Support
 
 ## Commands
 | Usage      | Description                        | Permission      |
