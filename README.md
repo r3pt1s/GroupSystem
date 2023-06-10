@@ -1,4 +1,6 @@
-# [GroupSystem](https://poggit.pmmp.io/p/GroupSystem) [![](https://poggit.pmmp.io/shield.state/GroupSystem)](https://poggit.pmmp.io/p/GroupSystem) [![](https://poggit.pmmp.io/shield.dl.total/GroupSystem)](https://poggit.pmmp.io/p/GroupSystem)
+# [GroupSystem](https://poggit.pmmp.io/p/GroupSystem) [![](https://poggit.pmmp.io/shield.dl/GroupSystem)](https://poggit.pmmp.io/p/GroupSystem) [![](https://poggit.pmmp.io/shield.dl.total/GroupSystem)](https://poggit.pmmp.io/p/GroupSystem)
+
+Manage permissions and ranks of the players!
 
 ## Features
 - **Full-Custom** Messages
@@ -142,4 +144,5 @@ see_available_group_title: §e{%0}
 see_available_group_text: '§7Name: §e{%0}{line}§r§7NameTag: §e{%1}{line}§r§7DisplayName:
   §e{%2}{line}§r§7ChatFormat: §e{%3}{line}§r§7Permissions:{line}§e{%4}'
 see_available_group_back: §4Back
+```
 ```
