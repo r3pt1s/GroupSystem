@@ -2,7 +2,7 @@
 
 ## Features
 - **Full-Custom** Messages
-- **Temporary**-Ranks
+- **Time**-Ranks
 - **Custom** Paths
 - **ScoreHud** Support
 - **Update** Checker
@@ -23,6 +23,14 @@
 
 ## Configuration
 ```yaml
+# mysql, json, yml
+provider: json
+mysql:
+  host: "localhost"
+  port: 3306
+  username: "root"
+  password: "your_password"
+  database: "your_database"
 DefaultGroup: Player
 Update-Check: true
 # Example: /home/GroupSystem/
@@ -89,7 +97,6 @@ manage_players_ui_back: §4Back
 add_group_ui_title: §aAdd group
 add_group_ui_choose_group: §7Choose a group
 add_group_ui_choose_time: §7Choose a time §8(§cLeave it blank for lifetime§8)
-add_group_ui_choose_priority: §7Choose a priority
 remove_group_ui_title: §cRemove group
 remove_group_ui_choose_group: §7Choose a group
 see_groups_ui_title: §eSee groups
