@@ -1,3 +1,10 @@
+provider: json
+mysql:
+  host: "localhost"
+  port: 3306
+  username: "root"
+  password: "your_password"
+  database: "your_database"
 DefaultGroup: Player
 Update-Check: true
 # Example: /home/GroupSystem/
