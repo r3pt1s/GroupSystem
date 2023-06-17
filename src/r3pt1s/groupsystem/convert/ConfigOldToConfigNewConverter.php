@@ -63,8 +63,9 @@ class ConfigOldToConfigNewConverter implements Converter {
 
                     foreach (array_diff(scandir(Configuration::getInstance()->getPlayersPath()), [".", ".."]) as $file) {
                         if ($anyOldPlayer) break;
-                        foreach ((new Config(Configuration::getInstance()->getPlayersPath() . $file, Config::JSON))->getAll(true) as $key) {
-                            if (in_array($key, self::OLD_PLAYER_KEYS)) {
+                        $content = file_get_contents(Configuration::getInstance()->getPlayersPath() . $file);
+                        foreach (self::OLD_PLAYER_KEYS as $keyOld) {
+                            if (str_contains($content, $keyOld)) {
                                 $anyOldPlayer = true;
                                 break;
                             }

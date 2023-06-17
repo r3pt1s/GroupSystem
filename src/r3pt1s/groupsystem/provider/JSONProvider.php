@@ -81,7 +81,8 @@ final class JSONProvider implements Provider {
         $resolver = new PromiseResolver();
 
 
-        foreach ($this->file->getAll() as $groupData) {
+        foreach ($this->file->getAll() as $name => $groupData) {
+            if (!isset($groupData["group"])) $groupData["group"] = $name;
             if (($group = Group::fromArray($groupData)) !== null) {
                 $groups[$group->getName()] = $group;
             }

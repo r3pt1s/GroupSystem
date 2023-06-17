@@ -80,7 +80,8 @@ final class YAMLProvider implements Provider {
         $resolver = new PromiseResolver();
 
 
-        foreach ($this->file->getAll() as $groupData) {
+        foreach ($this->file->getAll() as $name => $groupData) {
+            if (!isset($groupData["group"])) $groupData["group"] = $name;
             if (($group = Group::fromArray($groupData)) !== null) {
                 $groups[$group->getName()] = $group;
             }
@@ -192,7 +193,7 @@ final class YAMLProvider implements Provider {
         $resolver = new PromiseResolver();
 
         $file = $this->getPlayerFile($username);
-        if ($file->exists("group") && $file->exists("expire") && ($group = PlayerGroup::fromArray($file->getAll())) !== null) {
+        if (($group = PlayerGroup::fromArray($file->getAll())) !== null) {
             $resolver->resolve($group);
         } else $resolver->reject();
 
