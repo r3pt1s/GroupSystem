@@ -20,6 +20,7 @@ use r3pt1s\groupsystem\player\PlayerRemainingGroup;
 class Session {
 
     private bool $loaded = false;
+    private bool $loadedSuccessful = false;
     private ?\Closure $load = null;
     private ?PlayerGroup $currentGroup = null;
     private array $groups = [];
@@ -119,23 +120,25 @@ class Session {
                             function(array $permissions): void {
                                 $this->permissions = $permissions;
                                 $this->loaded = true;
+                                $this->loadedSuccessful = true;
                                 if ($this->load !== null) ($this->load)($this->currentGroup, $this->groups, $this->permissions);
                             },
                             function(): void {
                                 GroupSystem::getInstance()->getLogger()->emergency("§cFailed to load permissions from §e" . $this->username);
-                                $this->getPlayer()?->kick("§cFailed to fetch your data. Contact an administrator.");
+                                $this->loaded = true;
                             }
                         );
                     },
                     function(): void {
                         GroupSystem::getInstance()->getLogger()->emergency("§cFailed to load groups from §e" . $this->username);
-                        $this->getPlayer()?->kick("§cFailed to fetch your data. Contact an administrator.");
+                        $this->loaded = true;
                     }
                 );
             },
             function(): void {
                 GroupSystem::getInstance()->getLogger()->emergency("§cFailed to load group from §e" . $this->username);
-                $this->getPlayer()?->kick("§cFailed to fetch your data. Contact an administrator.");
+                $this->currentGroup = GroupManager::getInstance()->getDefaultGroup();
+                $this->loaded = true;
             }
         );
     }
