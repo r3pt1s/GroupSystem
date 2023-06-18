@@ -139,7 +139,7 @@ class Session {
             },
             function(): void {
                 GroupSystem::getInstance()->getLogger()->emergency("§cFailed to load group from §e" . $this->username);
-                $this->currentGroup = GroupManager::getInstance()->getDefaultGroup();
+                $this->currentGroup = new PlayerGroup(GroupManager::getInstance()->getDefaultGroup());
                 $this->loaded = true;
                 if ($this->load !== null) ($this->load)($this->currentGroup, $this->groups, $this->permissions);
             }
