@@ -157,6 +157,7 @@ class Session {
         if ($this->currentGroup === null) return;
         $player = $this->getPlayer();
         if ($player !== null) {
+            if ($this->attachment === null) $this->attachment = $player->addAttachment(GroupSystem::getInstance());
             ($ev = new PlayerUpdateEvent($player, str_replace(["{name}"], $player->getName(), $this->currentGroup->getGroup()->getNameTag()), str_replace(["{name}"], $player->getName(), $this->currentGroup->getGroup()->getDisplayName())))->call();
             if ($ev->isCancelled()) return;
             $player->setNameTag($ev->getNameTag());
