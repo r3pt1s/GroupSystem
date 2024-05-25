@@ -2,6 +2,7 @@
 
 namespace r3pt1s\groupsystem\listener;
 
+use DateTime;
 use Ifera\ScoreHud\event\PlayerTagsUpdateEvent;
 use Ifera\ScoreHud\event\TagsResolveEvent;
 use Ifera\ScoreHud\scoreboard\ScoreTag;
@@ -13,11 +14,12 @@ use r3pt1s\groupsystem\event\GroupSetEvent;
 use r3pt1s\groupsystem\group\GroupManager;
 use r3pt1s\groupsystem\session\Session;
 use r3pt1s\groupsystem\session\SessionManager;
+use r3pt1s\groupsystem\util\Message;
 use r3pt1s\groupsystem\util\Utils;
 
 class TagsListener implements Listener {
 
-    public function onResolve(TagsResolveEvent $event) {
+    public function onResolve(TagsResolveEvent $event): void {
         $tag = $event->getTag();
         $group = Session::get($event->getPlayer())->getGroup();
         if ($group === null) return;
@@ -30,19 +32,19 @@ class TagsListener implements Listener {
                 $tag->setValue($group->getGroup()->getName());
                 break;
             case "groupsystem.group.expire":
-                $expireString = Utils::parse("raw_never");
-                if ($group->getExpireDate() instanceof \DateTime) $expireString = Utils::diffString(new \DateTime("now"), $group->getExpireDate());
+                $expireString = (string) Message::RAW_NEVER();
+                if ($group->getExpireDate() instanceof DateTime) $expireString = Utils::diffString(new DateTime("now"), $group->getExpireDate());
                 $tag->setValue($expireString);
                 break;
         }
     }
 
-    public function onSet(GroupSetEvent $event) {
+    public function onSet(GroupSetEvent $event): void {
         $player = Server::getInstance()->getPlayerExact($event->getUsername());
         $group = $event->getGroup();
 
-        $expireString = Utils::parse("raw_never");
-        if ($group->getExpireDate() instanceof \DateTime) $expireString = Utils::diffString(new \DateTime("now"), $group->getExpireDate());
+        $expireString = (string) Message::RAW_NEVER();
+        if ($group->getExpireDate() instanceof DateTime) $expireString = Utils::diffString(new DateTime("now"), $group->getExpireDate());
 
         if ($player !== null) {
             $ev = new PlayerTagsUpdateEvent(
@@ -57,7 +59,7 @@ class TagsListener implements Listener {
         }
     }
 
-    public function onEdit(GroupEditEvent $event) {
+    public function onEdit(GroupEditEvent $event): void {
         $group = $event->getGroup();
 
         foreach (array_filter(SessionManager::getInstance()->getSessions(), fn(Session $session) => $session->isLoaded() && $session->getPlayer() !== null) as $session) {
@@ -71,7 +73,7 @@ class TagsListener implements Listener {
         }
     }
 
-    public function onRemove(GroupRemoveEvent $event) {
+    public function onRemove(GroupRemoveEvent $event): void {
         $group = $event->getGroup();
         $default = GroupManager::getInstance()->getDefaultGroup();
 
@@ -82,7 +84,7 @@ class TagsListener implements Listener {
                     [
                         new ScoreTag("groupsystem.group", $default->getColorCode() . $default->getName()),
                         new ScoreTag("groupsystem.group.name", $default->getName()),
-                        new ScoreTag("groupsystem.group.expire", Utils::parse("raw_never"))
+                        new ScoreTag("groupsystem.group.expire", Message::RAW_NEVER())
                     ]
                 );
                 $ev->call();

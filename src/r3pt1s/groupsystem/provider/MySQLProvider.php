@@ -2,113 +2,123 @@
 
 namespace r3pt1s\groupsystem\provider;
 
+use Closure;
 use pocketmine\promise\Promise;
 use pocketmine\promise\PromiseResolver;
+use poggit\libasynql\DataConnector;
+use poggit\libasynql\libasynql;
+use poggit\libasynql\SqlError;
 use r3pt1s\groupsystem\convert\ConfigToMySQLConverter;
 use r3pt1s\groupsystem\group\GroupManager;
-use r3pt1s\groupsystem\util\AsyncExecutor;
-use r3pt1s\groupsystem\util\Database;
+use r3pt1s\groupsystem\GroupSystem;
+use r3pt1s\groupsystem\util\Configuration;
 use r3pt1s\groupsystem\group\Group;
 use r3pt1s\groupsystem\player\PlayerGroup;
 use r3pt1s\groupsystem\player\PlayerRemainingGroup;
+use r3pt1s\groupsystem\util\Utils;
 
 final class MySQLProvider implements Provider {
 
+    private DataConnector $connector;
+
     public function __construct() {
-        AsyncExecutor::execute(fn(Database $database) => $database->initializeTable(), fn() => (new ConfigToMySQLConverter())->convert());
+        $mysql = Utils::renameAndRemove(Configuration::getInstance()->getMysql(), ["database"], ["schema"]);
+        $this->connector = libasynql::create(GroupSystem::getInstance(), [
+            "type" => "mysql",
+            "mysql" => $mysql
+        ], [
+            "mysql" => "mysql.sql"
+        ], true);
+
+        $this->connector->executeGeneric("table.groups");
+        $this->connector->executeGeneric("table.players");
+        $this->connector->waitAll();
+    }
+
+    public function tryConvert(): void {
+        (new ConfigToMySQLConverter())->convert();
     }
 
     public function createGroup(Group $group): void {
-        $groupData = $group->toArray();
-        $groupData["permissions"] = json_encode($groupData["permissions"]);
-        AsyncExecutor::execute(function(Database $database) use($groupData): void {
-            if (!$database->has("groups", ["name" => $groupData["name"]])) {
-                $database->insert("groups", $groupData);
-            }
-        });
+        $this->connector->executeInsert("groups.add", $group->buildMysqlInsertArgs());
     }
 
     public function removeGroup(Group $group): void {
-        $groupData = $group->toArray();
-        AsyncExecutor::execute(function(Database $database) use($groupData): void {
-            if ($database->has("groups", ["name" => $groupData["name"]])) {
-                $database->delete("groups", ["name" => $groupData["name"]]);
-            }
-        });
+        $this->connector->executeGeneric("groups.remove", ["name" => $group->getName()]);
     }
 
     public function editGroup(Group $group, array $data): void {
-        $groupData = $group->toArray();
-        if (isset($data["permissions"])) $data["permissions"] = json_encode($data["permissions"]);
-        AsyncExecutor::execute(function(Database $database) use($groupData, $data): void {
-            if ($database->has("groups", ["name" => $groupData["name"]])) {
-                $database->update("groups", $data, ["name" => $groupData["name"]]);
-            }
-        });
+        $this->connector->executeChange("groups.edit", $group->buildMysqlInsertArgs());
     }
 
     public function checkGroup(string $name): Promise {
-        /** @var PromiseResolver<bool> */
         $resolver = new PromiseResolver();
-        AsyncExecutor::execute(fn(Database $database) => $database->has("groups", ["name" => $name]), fn(bool $is) => $resolver->resolve($is));
+        $this->connector->executeSelect("groups.check", [
+            "name" => $name,
+        ], fn (array $rows) => $resolver->resolve((bool) array_values($rows[0])[0]), fn(SqlError $error) => $resolver->reject());
         return $resolver->getPromise();
     }
 
     public function getGroupByName(string $name): Promise {
-        /** @var PromiseResolver<Group> */
         $resolver = new PromiseResolver();
 
-        AsyncExecutor::execute(fn(Database $database) => $database->get("groups", "*", ["name" => $name]), function(?array $data) use($resolver, $name): void {
-            if (!is_array($data)) {
+        $this->connector->executeSelect("groups.get", [
+            "name" => $name
+        ], function (array $rows) use($resolver): void {
+            if (count($rows) == 0) {
                 $resolver->reject();
                 return;
             }
 
-            $data["permissions"] = json_decode($data["permissions"]);
-            if (($group = Group::fromArray($data)) !== null) {
+            $rows[0]["permissions"] = json_decode($rows[0]["permissions"], true);
+            if (($group = Group::fromArray($rows[0])) !== null) {
                 $resolver->resolve($group);
             } else $resolver->reject();
-        });
+        }, fn(SqlError $error) => $resolver->reject());
 
         return $resolver->getPromise();
     }
 
     public function getAllGroups(): Promise {
-        /** @var PromiseResolver<array<Group>> */
         $resolver = new PromiseResolver();
 
-        AsyncExecutor::execute(fn(Database $database) => $database->select("groups", ["name", "display_name", "name_tag", "chat_format", "color_code", "permissions"], "*"), function(?array $data) use($resolver): void {
-            if (!is_array($data)) {
-                $resolver->reject();
+        $this->connector->executeSelect("groups.getAll", [], function (array $rows) use($resolver): void {
+            if (count($rows) == 0) {
+                $resolver->resolve([]);
                 return;
             }
 
             $groups = [];
-            foreach ($data as $groupData) {
-                $groupData["permissions"] = json_decode($groupData["permissions"], true);
-                if (($group = Group::fromArray($groupData)) !== null) {
+            foreach ($rows as $data) {
+                $data["permissions"] = json_decode($data["permissions"], true);
+                if (($group = Group::fromArray($data)) !== null) {
                     $groups[$group->getName()] = $group;
                 }
             }
 
             $resolver->resolve($groups);
-        });
+        }, fn(SqlError $error) => $resolver->reject());
 
         return $resolver->getPromise();
     }
 
-    public function createPlayer(string $username, ?\Closure $completion = null): void {
-        $defaultGroup = GroupManager::getInstance()->getDefaultGroup()->getName();
-        AsyncExecutor::execute(fn(Database $database) => $database->insert("players", ["username" => $username, "group" => $defaultGroup, "groups" => json_encode([]), "permissions" => json_encode([])]), fn() => $completion(true));
+    public function createPlayer(string $username, ?Closure $completion = null, ?array $customData = null): void {
+        $this->connector->executeInsert("player.create", [
+            "username" => $username,
+            "group" => $customData["group"] ?? GroupManager::getInstance()->getDefaultGroup()->getName(),
+            "expire" => $customData["expire"] ?? null,
+            "groups" => json_encode($customData["permissions"] ?? []),
+            "permissions" => json_encode($customData["permissions"] ?? []),
+        ], fn() => $completion(true), fn(SqlError $error) => $completion(false));
     }
 
     public function setGroup(string $username, PlayerGroup $group): void {
-        $groupData = $group->toArray();
-        AsyncExecutor::execute(fn(Database $database) => $database->update("players", $groupData));
+        $this->connector->executeChange("player.setGroup", array_merge(
+            ["username" => $username], $group->toArray()
+        ));
     }
 
     public function addGroupToPlayer(string $username, PlayerRemainingGroup $group): Promise {
-        /** @var PromiseResolver<bool> */
         $resolver = new PromiseResolver();
         $groups = $this->getGroupsOfPlayer($username);
         $groups->onCompletion(function(array $groups) use($username, $group, $resolver): void {
@@ -118,8 +128,9 @@ final class MySQLProvider implements Provider {
             }
 
             $groups[$group->getGroup()->getName()] = $group->toArray();
-            AsyncExecutor::execute(fn(Database $database) => $database->update("players", ["groups" => json_encode($groups)], ["username" => $username]));
-            $resolver->resolve(true);
+            $this->connector->executeChange("player.updateGroups", [
+                "username" => $username, "groups" => json_encode($groups)
+            ], fn (int $affectedRows) => $resolver->resolve(true), fn(SqlError $error) => $resolver->reject());
         }, function() use($resolver): void {
             $resolver->reject();
         });
@@ -129,7 +140,6 @@ final class MySQLProvider implements Provider {
 
     public function removeGroupFromPlayer(string $username, PlayerRemainingGroup|Group $group): Promise {
         $group = $group instanceof PlayerRemainingGroup ? $group->getGroup()->getName() : $group->getName();
-        /** @var PromiseResolver<bool> */
         $resolver = new PromiseResolver();
         $groups = $this->getGroupsOfPlayer($username);
         $groups->onCompletion(function(array $groups) use($username, $group, $resolver): void {
@@ -139,8 +149,9 @@ final class MySQLProvider implements Provider {
             }
 
             unset($groups[$group]);
-            AsyncExecutor::execute(fn(Database $database) => $database->update("players", ["groups" => json_encode($groups)], ["username" => $username]));
-            $resolver->resolve(true);
+            $this->connector->executeChange("player.updateGroups", [
+                "username" => $username, "groups" => json_encode($groups)
+            ], fn (int $affectedRows) => $resolver->resolve(true), fn(SqlError $error) => $resolver->reject());
         }, function() use($resolver): void {
             $resolver->reject();
         });
@@ -150,7 +161,6 @@ final class MySQLProvider implements Provider {
 
     public function hasGroup(string $username, PlayerRemainingGroup|Group|string $group): Promise {
         $group = ($group instanceof PlayerRemainingGroup ? $group->getGroup()->getName() : ($group instanceof Group ? $group->getName() : $group));
-        /** @var PromiseResolver<bool> */
         $resolver = new PromiseResolver();
 
         $groups = $this->getGroupsOfPlayer($username);
@@ -164,41 +174,36 @@ final class MySQLProvider implements Provider {
     }
 
     public function getGroupOfPlayer(string $username): Promise {
-        /** @var PromiseResolver<PlayerGroup> */
         $resolver = new PromiseResolver();
 
-        AsyncExecutor::execute(fn(Database $database) => $database->get("players", ["group", "expire"], ["username" => $username]), function(?array $data) use($username, $resolver): void {
-            if (!is_array($data)) {
+        $this->connector->executeSelect("player.getGroup", [
+            "username" => $username
+        ], function (array $rows) use($resolver): void {
+            if (count($rows) == 0) {
                 $resolver->reject();
                 return;
             }
 
-            if (($group = PlayerGroup::fromArray($data)) !== null) {
+            if (($group = PlayerGroup::fromArray($rows[0])) !== null) {
                 $resolver->resolve($group);
             } else $resolver->reject();
-        });
+        }, fn(SqlError $error) => $resolver->reject());
 
         return $resolver->getPromise();
     }
 
     public function getGroupsOfPlayer(string $username, bool $asInstance = false): Promise {
-        /** @var PromiseResolver<array<PlayerRemainingGroup>> */
         $resolver = new PromiseResolver();
 
-        AsyncExecutor::execute(function(Database $database) use($username): ?array {
-            $groups = $database->get("players", ["groups"], ["username" => $username]);
-            if (is_array($groups)) {
-                if (is_string($groups["groups"])) {
-                    if (is_array(($groups = @json_decode($groups["groups"], true)))) return $groups;
-                }
-            }
-            return null;
-        }, function(?array $data) use ($username, $resolver, $asInstance): void {
-            if (!is_array($data)) {
-                $resolver->reject();
+        $this->connector->executeSelect("player.getGroups", [
+            "username" => $username
+        ], function (array $rows) use($resolver, $asInstance): void {
+            if (count($rows) == 0) {
+                $resolver->resolve([]);
                 return;
             }
 
+            $data = json_decode($rows[0]["groups"], true);
             $groups = [];
             foreach ($data as $groupData) {
                 if (($group = PlayerRemainingGroup::fromArray($groupData)) !== null) {
@@ -207,7 +212,7 @@ final class MySQLProvider implements Provider {
             }
 
             $resolver->resolve($groups);
-        });
+        }, fn(SqlError $error) => $resolver->reject());
 
         return $resolver->getPromise();
     }
@@ -216,7 +221,9 @@ final class MySQLProvider implements Provider {
         $permissions = $this->getPermissions($username);
         $permissions->onCompletion(function(array $permissions) use($username, $permission): void {
             if (!in_array($permission, $permissions)) $permissions[] = $permission;
-            AsyncExecutor::execute(fn(Database $database) => $database->update("players", ["permissions" => json_encode($permissions)], ["username" => $username]));
+            $this->connector->executeChange("player.updatePermissions", [
+                "username" => $username, "permissions" => json_encode($permissions)
+            ]);
         }, function(): void {});
     }
 
@@ -224,38 +231,34 @@ final class MySQLProvider implements Provider {
         $permissions = $this->getPermissions($username);
         $permissions->onCompletion(function(array $permissions) use($username, $permission): void {
             if (in_array($permission, $permissions)) unset($permissions[array_search($permission, $permissions)]);
-            AsyncExecutor::execute(fn(Database $database) => $database->update("players", ["permissions" => json_encode($permissions)], ["username" => $username]));
+            $this->connector->executeChange("player.updatePermissions", [
+                "username" => $username, "permissions" => json_encode($permissions)
+            ]);
         }, function(): void {});
     }
 
     public function getPermissions(string $username): Promise {
-        /** @var PromiseResolver<array<string>> */
         $resolver = new PromiseResolver();
 
-        AsyncExecutor::execute(function(Database $database) use($username): ?array {
-            $permissions = $database->get("players", ["permissions"], ["username" => $username]);
-            if (is_array($permissions)) {
-                if (is_string($permissions["permissions"])) {
-                    if (is_array(($permissions = @json_decode($permissions["permissions"], true)))) return $permissions;
-                }
-            }
-            return null;
-        }, function(?array $permissions) use ($username, $resolver): void {
-            if (!is_array($permissions)) {
-                $resolver->reject();
+        $this->connector->executeSelect("player.getPermissions", [
+            "username" => $username
+        ], function (array $rows) use($resolver): void {
+            if (count($rows) == 0) {
+                $resolver->resolve([]);
                 return;
             }
 
-            $resolver->resolve($permissions);
+            $resolver->resolve(json_decode($rows[0]["permissions"], true));
         });
 
         return $resolver->getPromise();
     }
 
     public function checkPlayer(string $username): Promise {
-        /** @var PromiseResolver<bool> */
         $resolver = new PromiseResolver();
-        AsyncExecutor::execute(fn(Database $database) => $database->has("players", ["username" => $username]), fn(bool $is) => $resolver->resolve($is));
+        $this->connector->executeSelect("player.check", [
+            "username" => $username,
+        ], fn (array $rows) => $resolver->resolve((bool) array_values($rows[0])[0]), fn(SqlError $error) => $resolver->reject());
         return $resolver->getPromise();
     }
 }

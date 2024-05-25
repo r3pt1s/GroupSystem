@@ -2,6 +2,7 @@
 
 namespace r3pt1s\groupsystem\convert;
 
+use JsonException;
 use pocketmine\utils\Config;
 use r3pt1s\groupsystem\GroupSystem;
 use r3pt1s\groupsystem\util\Configuration;
@@ -49,44 +50,45 @@ class ConfigOldToConfigNewConverter implements Converter {
                 }
 
                 if (file_exists(Configuration::getInstance()->getGroupsPath() . "groups." . $extension)) rename(Configuration::getInstance()->getGroupsPath() . "groups." . $extension, Configuration::getInstance()->getGroupsPath() . "old_groups." . $extension);
-                file_put_contents(Configuration::getInstance()->getGroupsPath() . "groups." . $extension, match ($extension) {
-                    "yml" => yaml_emit($groups, YAML_UTF8_ENCODING),
-                    default => json_encode($groups, JSON_PRETTY_PRINT | JSON_BIGINT_AS_STRING | JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE)
-                });
+                try {
+                    file_put_contents(Configuration::getInstance()->getGroupsPath() . "groups." . $extension, match ($extension) {
+                        "yml" => yaml_emit($groups, YAML_UTF8_ENCODING),
+                        default => json_encode($groups, JSON_PRETTY_PRINT | JSON_BIGINT_AS_STRING | JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE)
+                    });
+                } catch (JsonException) {}
 
-                if (file_exists(Configuration::getInstance()->getPlayersPath())) {
-                    $anyOldPlayer = false;
-                    if (count(array_diff(scandir(Configuration::getInstance()->getPlayersPath()), [".", ".."])) == 0) {
-                        GroupSystem::getInstance()->getLogger()->notice("§aSuccessfully §fconverted §eold config files §fto §enew config files§f!");
-                        return;
+                GroupSystem::getInstance()->getLogger()->notice("§aSuccessfully §fconverted §eold group files §fto §enew group files§f!");
+            }
+        }
+
+        if (file_exists(Configuration::getInstance()->getPlayersPath())) {
+            $anyOldPlayer = false;
+            if (count(array_diff(scandir(Configuration::getInstance()->getPlayersPath()), [".", ".."])) == 0) {
+                return;
+            }
+
+            foreach (array_diff(scandir(Configuration::getInstance()->getPlayersPath()), [".", ".."]) as $file) {
+                if ($anyOldPlayer) break;
+                $content = file_get_contents(Configuration::getInstance()->getPlayersPath() . $file);
+                foreach (self::OLD_PLAYER_KEYS as $keyOld) {
+                    if (str_contains($content, $keyOld)) {
+                        $anyOldPlayer = true;
+                        break;
                     }
-
-                    foreach (array_diff(scandir(Configuration::getInstance()->getPlayersPath()), [".", ".."]) as $file) {
-                        if ($anyOldPlayer) break;
-                        $content = file_get_contents(Configuration::getInstance()->getPlayersPath() . $file);
-                        foreach (self::OLD_PLAYER_KEYS as $keyOld) {
-                            if (str_contains($content, $keyOld)) {
-                                $anyOldPlayer = true;
-                                break;
-                            }
-                        }
-                    }
-
-                    if ($anyOldPlayer) {
-                        foreach (array_diff(scandir(Configuration::getInstance()->getPlayersPath()), [".", ".."]) as $file) {
-                            $playerName = pathinfo(Configuration::getInstance()->getPlayersPath() . $file, PATHINFO_FILENAME);
-                            $data = json_decode(file_get_contents(Configuration::getInstance()->getPlayersPath() . $file), true);
-                            if (file_exists(Configuration::getInstance()->getPlayersPath() . $file)) rename(Configuration::getInstance()->getPlayersPath() . $file, Configuration::getInstance()->getPlayersPath() . "old_" . $playerName . ".json");
-                            file_put_contents(Configuration::getInstance()->getPlayersPath() . $file, json_encode(Utils::renewPlayerDataKeys($data), JSON_PRETTY_PRINT | JSON_BIGINT_AS_STRING | JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE));
-                        }
-
-                        GroupSystem::getInstance()->getLogger()->notice("§aSuccessfully §fconverted §eold config files §fto §enew config files§f!");
-                    } else {
-                        GroupSystem::getInstance()->getLogger()->notice("§aSuccessfully §fconverted §eold config files §fto §enew config files§f!");
-                    }
-                } else {
-                    GroupSystem::getInstance()->getLogger()->notice("§aSuccessfully §fconverted §eold config files §fto §enew config files§f!");
                 }
+            }
+
+            if ($anyOldPlayer) {
+                foreach (array_diff(scandir(Configuration::getInstance()->getPlayersPath()), [".", ".."]) as $file) {
+                    $playerName = pathinfo(Configuration::getInstance()->getPlayersPath() . $file, PATHINFO_FILENAME);
+                    $data = json_decode(file_get_contents(Configuration::getInstance()->getPlayersPath() . $file), true);
+                    if (file_exists(Configuration::getInstance()->getPlayersPath() . $file)) rename(Configuration::getInstance()->getPlayersPath() . $file, Configuration::getInstance()->getPlayersPath() . "old_" . $playerName . ".json");
+                    try {
+                        file_put_contents(Configuration::getInstance()->getPlayersPath() . $file, json_encode(Utils::renewPlayerDataKeys($data), JSON_PRETTY_PRINT | JSON_BIGINT_AS_STRING | JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE));
+                    } catch (JsonException) {}
+                }
+
+                GroupSystem::getInstance()->getLogger()->notice("§aSuccessfully §fconverted §eold player files §fto §enew player files§f!");
             }
         }
     }

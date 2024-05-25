@@ -19,7 +19,7 @@ class SessionManager {
         return $this->sessions[$player->getName()] = new Session($player->getName());
     }
 
-    public function destroy(Player $player) {
+    public function destroy(Player $player): void {
         unset($this->sessions[$player->getName()]);
     }
 

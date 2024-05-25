@@ -7,7 +7,7 @@ use pocketmine\event\Event;
 
 class GroupRemoveEvent extends Event {
 
-    public function __construct(private Group $group) {}
+    public function __construct(private readonly Group $group) {}
 
     public function getGroup(): Group {
         return $this->group;

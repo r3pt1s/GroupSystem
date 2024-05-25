@@ -2,12 +2,15 @@
 
 namespace r3pt1s\groupsystem\provider;
 
+use Closure;
 use pocketmine\promise\Promise;
 use r3pt1s\groupsystem\group\Group;
 use r3pt1s\groupsystem\player\PlayerGroup;
 use r3pt1s\groupsystem\player\PlayerRemainingGroup;
 
 interface Provider {
+
+    public function tryConvert(): void;
 
     public function createGroup(Group $group): void;
 
@@ -21,7 +24,7 @@ interface Provider {
 
     public function getAllGroups(): Promise;
 
-    public function createPlayer(string $username, ?\Closure $completion = null): void;
+    public function createPlayer(string $username, ?Closure $completion = null, ?array $customData = null): void;
 
     public function setGroup(string $username, PlayerGroup $group): void;
 

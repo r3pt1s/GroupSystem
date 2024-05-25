@@ -3,21 +3,20 @@
 namespace r3pt1s\groupsystem\update;
 
 use pocketmine\Server;
+use pocketmine\utils\SingletonTrait;
 use r3pt1s\groupsystem\GroupSystem;
 
 class UpdateChecker {
+    use SingletonTrait;
 
-    private static self $instance;
-    private bool $doUpdateCheck;
     private array $data = [];
 
-    public function __construct(bool $doUpdateCheck = true) {
-        self::$instance = $this;
-        $this->doUpdateCheck = $doUpdateCheck;
+    public function __construct(private readonly bool $doUpdateCheck = true) {
+        self::setInstance($this);
         $this->check();
     }
 
-    public function check() {
+    public function check(): void {
         if (!$this->isDoUpdateCheck()) return;
        Server::getInstance()->getAsyncPool()->submitTask(new AsyncUpdateCheckTask());
     }

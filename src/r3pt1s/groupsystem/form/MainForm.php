@@ -12,7 +12,7 @@ use r3pt1s\groupsystem\form\subForm\ManagePlayerForm;
 use r3pt1s\groupsystem\GroupSystem;
 use r3pt1s\groupsystem\player\PlayerGroup;
 use r3pt1s\groupsystem\session\Session;
-use r3pt1s\groupsystem\util\Utils;
+use r3pt1s\groupsystem\util\Message;
 use pocketmine\player\Player;
 
 class MainForm extends MenuForm {
@@ -20,14 +20,14 @@ class MainForm extends MenuForm {
     private array $options = [];
 
     public function __construct(string $message = "") {
-        $this->options[] = new MenuOption(Utils::parse("main_ui_manage_players"));
-        $this->options[] = new MenuOption(Utils::parse("main_ui_manage_groups"));
+        $this->options[] = new MenuOption(Message::MAIN_UI_MANAGE_PLAYERS());
+        $this->options[] = new MenuOption(Message::MAIN_UI_MANAGE_GROUPS());
 
-        parent::__construct(Utils::parse("main_ui_title"), $message, $this->options, function(Player $player, int $data): void {
+        parent::__construct(Message::MAIN_UI_TITLE(), $message, $this->options, function(Player $player, int $data): void {
             if ($data == 0) {
                 $player->sendForm(new CustomForm(
-                    Utils::parse("select_player_ui_title"),
-                    [new Input("username", Utils::parse("select_player_input_text"), "", $player->getName())],
+                    Message::SELECT_PLAYER_UI_TITLE(),
+                    [new Input("username", Message::SELECT_PLAYER_INPUT_TEXT(), "", $player->getName())],
                     function(Player $player, CustomFormResponse $response): void {
                         $username = $response->getString("username");
                         GroupSystem::getInstance()->getProvider()->checkPlayer($username)->onCompletion(
@@ -36,10 +36,10 @@ class MainForm extends MenuForm {
                                     Session::get($username)->onLoad(function(PlayerGroup $group, array $groups, array $permissions) use($username, $player): void {
                                         $player->sendForm(new ManagePlayerForm($username, $group));
                                     });
-                                } else $player->sendForm(new self(Utils::parse("player_not_found", [$username])));
+                                } else $player->sendForm(new self(Message::PLAYER_NOT_FOUND()->parse([$username])));
                             },
                             function() use($username, $player): void {
-                                $player->sendForm(new self(Utils::parse("player_not_found", [$username])));
+                                $player->sendForm(new self(Message::PLAYER_NOT_FOUND()->parse([$username])));
                             }
                         );
                     }, function(Player $player): void {

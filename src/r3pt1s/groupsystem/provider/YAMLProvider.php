@@ -2,6 +2,9 @@
 
 namespace r3pt1s\groupsystem\provider;
 
+use Closure;
+use Exception;
+use JsonException;
 use pocketmine\promise\Promise;
 use pocketmine\promise\PromiseResolver;
 use pocketmine\utils\Config;
@@ -18,9 +21,14 @@ final class YAMLProvider implements Provider {
     private Config $file;
 
     public function __construct() {
-        (new ConfigOldToConfigNewConverter())->convert();
         if (!file_exists(Configuration::getInstance()->getPlayersPath())) mkdir(Configuration::getInstance()->getPlayersPath());
         $this->file = new Config(Configuration::getInstance()->getGroupsPath() . "groups.yml", Config::YAML);
+    }
+
+    public function tryConvert(): void {
+        try {
+            (new ConfigOldToConfigNewConverter())->convert();
+        } catch (Exception) {}
     }
 
     public function createGroup(Group $group): void {
@@ -28,7 +36,7 @@ final class YAMLProvider implements Provider {
             $this->file->set($group->getName(), $group->toArray());
             try {
                 $this->file->save();
-            } catch (\JsonException $e) {
+            } catch (JsonException $e) {
                 GroupSystem::getInstance()->getLogger()->logException($e);
             }
         }
@@ -39,7 +47,7 @@ final class YAMLProvider implements Provider {
             $this->file->remove($group->getName());
             try {
                 $this->file->save();
-            } catch (\JsonException $e) {
+            } catch (JsonException $e) {
                 GroupSystem::getInstance()->getLogger()->logException($e);
             }
         }
@@ -50,21 +58,19 @@ final class YAMLProvider implements Provider {
             $this->file->set($group->getName(), $data);
             try {
                 $this->file->save();
-            } catch (\JsonException $e) {
+            } catch (JsonException $e) {
                 GroupSystem::getInstance()->getLogger()->logException($e);
             }
         }
     }
 
     public function checkGroup(string $name): Promise {
-        /** @var PromiseResolver<bool> */
         $resolver = new PromiseResolver();
         $resolver->resolve($this->file->exists($name));
         return $resolver->getPromise();
     }
 
     public function getGroupByName(string $name): Promise {
-        /** @var PromiseResolver<Group> */
         $resolver = new PromiseResolver();
 
         if ($this->file->exists($name) && ($group = Group::fromArray($this->file->get($name, []))) !== null) {
@@ -76,7 +82,6 @@ final class YAMLProvider implements Provider {
 
     public function getAllGroups(): Promise {
         $groups = [];
-        /** @var PromiseResolver<array<Group>> */
         $resolver = new PromiseResolver();
 
 
@@ -91,18 +96,19 @@ final class YAMLProvider implements Provider {
         return $resolver->getPromise();
     }
 
-    public function createPlayer(string $username, ?\Closure $completion = null): void {
+    public function createPlayer(string $username, ?Closure $completion = null, ?array $customData = null): void {
         $file = $this->getPlayerFile($username);
         $file->setAll([
-            "group" => GroupManager::getInstance()->getDefaultGroup()->getName(),
-            "expire" => null,
-            "groups" => [],
-            "permissions" => []
+            "group" => $customData["group"] ?? GroupManager::getInstance()->getDefaultGroup()->getName(),
+            "expire" => $customData["expire"] ?? null,
+            "groups" => $customData["groups"] ?? null,
+            "permissions" => $customData["permissions"] ?? null,
         ]);
+
         try {
             $file->save();
             $completion(true);
-        } catch (\JsonException $e) {
+        } catch (JsonException $e) {
             $completion(false);
             GroupSystem::getInstance()->getLogger()->logException($e);
         }
@@ -113,13 +119,12 @@ final class YAMLProvider implements Provider {
         foreach ($group->toArray() as $k => $v) $file->set($k, $v);
         try {
             $file->save();
-        } catch (\JsonException $e) {
+        } catch (JsonException $e) {
             GroupSystem::getInstance()->getLogger()->logException($e);
         }
     }
 
     public function addGroupToPlayer(string $username, PlayerRemainingGroup $group): Promise {
-        /** @var PromiseResolver<bool> */
         $resolver = new PromiseResolver();
         $groups = $this->getGroupsOfPlayer($username);
         $groups->onCompletion(function(array $groups) use($username, $group, $resolver): void {
@@ -134,7 +139,7 @@ final class YAMLProvider implements Provider {
             try {
                 $file->save();
                 $resolver->resolve(true);
-            } catch (\JsonException $e) {
+            } catch (JsonException $e) {
                 $resolver->resolve(false);
                 GroupSystem::getInstance()->getLogger()->logException($e);
             }
@@ -147,7 +152,6 @@ final class YAMLProvider implements Provider {
 
     public function removeGroupFromPlayer(string $username, PlayerRemainingGroup|Group $group): Promise {
         $group = $group instanceof PlayerRemainingGroup ? $group->getGroup()->getName() : $group->getName();
-        /** @var PromiseResolver<bool> */
         $resolver = new PromiseResolver();
         $groups = $this->getGroupsOfPlayer($username);
         $groups->onCompletion(function(array $groups) use($username, $group, $resolver): void {
@@ -162,7 +166,7 @@ final class YAMLProvider implements Provider {
             try {
                 $file->save();
                 $resolver->resolve(true);
-            } catch (\JsonException $e) {
+            } catch (JsonException $e) {
                 $resolver->resolve(false);
                 GroupSystem::getInstance()->getLogger()->logException($e);
             }
@@ -175,7 +179,6 @@ final class YAMLProvider implements Provider {
 
     public function hasGroup(string $username, PlayerRemainingGroup|Group|string $group): Promise {
         $group = ($group instanceof PlayerRemainingGroup ? $group->getGroup()->getName() : ($group instanceof Group ? $group->getName() : $group));
-        /** @var PromiseResolver<bool> */
         $resolver = new PromiseResolver();
 
         $groups = $this->getGroupsOfPlayer($username);
@@ -189,7 +192,6 @@ final class YAMLProvider implements Provider {
     }
 
     public function getGroupOfPlayer(string $username): Promise {
-        /** @var PromiseResolver<PlayerGroup> */
         $resolver = new PromiseResolver();
 
         $file = $this->getPlayerFile($username);
@@ -202,7 +204,6 @@ final class YAMLProvider implements Provider {
 
     public function getGroupsOfPlayer(string $username, bool $asInstance = false): Promise {
         $groups = [];
-        /** @var PromiseResolver<array<PlayerRemainingGroup>> */
         $resolver = new PromiseResolver();
 
         foreach ($this->getPlayerFile($username)->get("groups", []) as $groupData) {
@@ -223,7 +224,7 @@ final class YAMLProvider implements Provider {
             $file->set("permissions", $permissions);
             try {
                 $file->save();
-            } catch (\JsonException $e) {
+            } catch (JsonException $e) {
                 GroupSystem::getInstance()->getLogger()->logException($e);
             }
         }, function(): void {});
@@ -237,7 +238,7 @@ final class YAMLProvider implements Provider {
             $file->set("permissions", $permissions);
             try {
                 $file->save();
-            } catch (\JsonException $e) {
+            } catch (JsonException $e) {
                 GroupSystem::getInstance()->getLogger()->logException($e);
             }
         }, function(): void {});
@@ -245,7 +246,6 @@ final class YAMLProvider implements Provider {
 
     public function getPermissions(string $username): Promise {
         $permissions = [];
-        /** @var PromiseResolver<array<string>> */
         $resolver = new PromiseResolver();
 
 
@@ -258,7 +258,6 @@ final class YAMLProvider implements Provider {
     }
 
     public function checkPlayer(string $username): Promise {
-        /** @var PromiseResolver<bool> */
         $resolver = new PromiseResolver();
         $resolver->resolve(file_exists(Configuration::getInstance()->getPlayersPath() . $username . ".json"));
         return $resolver->getPromise();

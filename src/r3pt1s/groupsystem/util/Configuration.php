@@ -2,6 +2,7 @@
 
 namespace r3pt1s\groupsystem\util;
 
+use Exception;
 use pocketmine\utils\Config;
 use r3pt1s\groupsystem\GroupSystem;
 
@@ -31,7 +32,7 @@ class Configuration {
         $this->load();
     }
 
-    public function load() {
+    public function load(): void {
         if ($this->config->exists("Default-Group")) {
             $this->defaultGroup = $this->config->get("Default-Group", "Player");
         }
@@ -43,7 +44,7 @@ class Configuration {
         $this->provider = $this->config->get("provider", $this->provider);
         try {
             $this->mysql = $this->config->get("mysql", $this->mysql);
-        } catch (\Exception $exception) {}
+        } catch (Exception) {}
 
         if (!in_array(strtolower($this->provider), self::PROVIDERS)) {
             GroupSystem::getInstance()->getLogger()->warning("§cThe provided Provider §e" . strtolower($this->provider) . " §cdoesn't exists, using §eJSON §cinstead...");

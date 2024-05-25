@@ -2,8 +2,8 @@
 
 namespace r3pt1s\groupsystem;
 
-use pocketmine\scheduler\ClosureTask;
 use pocketmine\utils\Config;
+use pocketmine\utils\MainLogger;
 use pocketmine\utils\SingletonTrait;
 use r3pt1s\groupsystem\command\GroupCommand;
 use r3pt1s\groupsystem\command\GroupInfoCommand;
@@ -18,10 +18,11 @@ use r3pt1s\groupsystem\provider\JSONProvider;
 use r3pt1s\groupsystem\provider\MySQLProvider;
 use r3pt1s\groupsystem\provider\Provider;
 use r3pt1s\groupsystem\provider\YAMLProvider;
-use r3pt1s\groupsystem\session\Session;
 use r3pt1s\groupsystem\session\SessionManager;
+use r3pt1s\groupsystem\task\SessionTickTask;
 use r3pt1s\groupsystem\update\UpdateChecker;
 use r3pt1s\groupsystem\util\Configuration;
+use r3pt1s\groupsystem\util\Message;
 
 class GroupSystem extends PluginBase {
     use SingletonTrait;
@@ -31,24 +32,27 @@ class GroupSystem extends PluginBase {
     private GroupManager $groupManager;
     private UpdateChecker $updateChecker;
     private SessionManager $sessionManager;
+    private Config $messageConfig;
 
     protected function onEnable(): void {
         self::setInstance($this);
 
         $this->saveDefaultConfig();
-
         $this->configuration = new Configuration($this->getConfig());
+
+        $this->fetchMessages();
+
         $this->provider = match (strtolower(Configuration::getInstance()->getProvider())) {
             "yml" => new YAMLProvider(),
             "mysql" => new MySQLProvider(),
             default => new JSONProvider()
         };
 
+        $this->provider->tryConvert();
+
         $this->groupManager = new GroupManager();
         $this->updateChecker = new UpdateChecker(Configuration::getInstance()->isDoUpdateCheck());
         $this->sessionManager = new SessionManager();
-
-        $this->createDefaultMessages();
 
         DefaultPermissions::registerPermission(new Permission("groupsystem.group.command"), [PermissionManager::getInstance()->getPermission(DefaultPermissions::ROOT_OPERATOR)]);
 
@@ -57,17 +61,13 @@ class GroupSystem extends PluginBase {
             new GroupInfoCommand("groupinfo", "GroupInfo Command")
         ]);
 
-        $this->getScheduler()->scheduleRepeatingTask(new ClosureTask(function(): void {
-            foreach (array_filter($this->sessionManager->getSessions(), fn(Session $session) => $session->isLoaded()) as $session) {
-                $session->tick();
-            }
-        }), 20);
+        $this->getScheduler()->scheduleRepeatingTask(new SessionTickTask(), 20);
 
         $this->getServer()->getPluginManager()->registerEvents(new EventListener(), $this);
         if ($this->getServer()->getPluginManager()->getPlugin("ScoreHud") !== null) $this->getServer()->getPluginManager()->registerEvents(new TagsListener(), $this);
     }
 
-    private function createDefaultMessages() {
+    private function fetchMessages(): void {
         $messages = [
             "prefix" => "§8» §l§cGroupSystem §r§8| §r§7",
             "raw_year" => "year(s)",
@@ -161,7 +161,7 @@ class GroupSystem extends PluginBase {
             "see_available_group_back" => "§4Back"
         ];
 
-        if (!file_exists(Configuration::getInstance()->getMessagesPath() . "messages.yml")) new Config(Configuration::getInstance()->getMessagesPath() . "messages.yml", 2, $messages);
+        $this->messageConfig = new Config(Configuration::getInstance()->getMessagesPath() . "messages.yml", 2, $messages);
     }
 
     public function getSessionManager(): SessionManager {
@@ -182,6 +182,10 @@ class GroupSystem extends PluginBase {
 
     public function getConfiguration(): Configuration {
         return $this->configuration;
+    }
+
+    public function getMessageConfig(): Config {
+        return $this->messageConfig;
     }
 
     public static function getInstance(): ?self {

@@ -2,6 +2,7 @@
 
 namespace r3pt1s\groupsystem\session;
 
+use Closure;
 use JetBrains\PhpStorm\Pure;
 use pocketmine\permission\Permission;
 use pocketmine\permission\PermissionAttachment;
@@ -21,24 +22,24 @@ class Session {
 
     private bool $loaded = false;
     private bool $loadedSuccessful = false;
-    private ?\Closure $load = null;
+    private ?Closure $completion = null;
     private ?PlayerGroup $currentGroup = null;
     private array $groups = [];
     private array $permissions = [];
     private ?PermissionAttachment $attachment = null;
 
-    public function __construct(private string $username) {
+    public function __construct(private readonly string $username) {
         $this->loadData();
     }
 
-    public function setGroup(PlayerGroup $group) {
+    public function setGroup(PlayerGroup $group): void {
         GroupSystem::getInstance()->getProvider()->setGroup($this->username, $group);
         (new GroupSetEvent($this->username, $group))->call();
         $this->currentGroup = $group;
         $this->update();
     }
 
-    public function addGroup(PlayerRemainingGroup $group, ?\Closure $completion = null) {
+    public function addGroup(PlayerRemainingGroup $group, ?Closure $completion = null): void {
         GroupSystem::getInstance()->getProvider()->addGroupToPlayer($this->username, $group)->onCompletion(
             function(bool $canAdd) use($group, $completion): void {
                 if ($canAdd) $this->groups[$group->getGroup()->getName()] = $group;
@@ -50,7 +51,7 @@ class Session {
         );
     }
 
-    public function removeGroup(PlayerRemainingGroup|Group $group, ?\Closure $completion = null) {
+    public function removeGroup(PlayerRemainingGroup|Group $group, ?Closure $completion = null): void {
         GroupSystem::getInstance()->getProvider()->removeGroupFromPlayer($this->username, $group)->onCompletion(
             function(bool $canRemove) use($group, $completion): void {
                 $group = $group instanceof PlayerRemainingGroup ? $group->getGroup()->getName() : $group->getName();
@@ -68,7 +69,7 @@ class Session {
         return isset($this->groups[$group]);
     }
 
-    public function nextGroup() {
+    public function nextGroup(): void {
         if (count($this->groups) == 0) {
             $this->setGroup(new PlayerGroup(GroupManager::getInstance()->getDefaultGroup()));
         } else {
@@ -93,7 +94,7 @@ class Session {
         return $groups[0] ?? null;
     }
 
-    public function addPermission(string $permission) {
+    public function addPermission(string $permission): void {
         if (in_array($permission, $this->permissions)) return;
         GroupSystem::getInstance()->getProvider()->addPermission($this->username, $permission);
         (new PermissionAddEvent($this->username, $permission))->call();
@@ -101,7 +102,7 @@ class Session {
         $this->reloadPermissions();
     }
 
-    public function removePermission(string $permission) {
+    public function removePermission(string $permission): void {
         if (!in_array($permission, $this->permissions)) return;
         GroupSystem::getInstance()->getProvider()->removePermission($this->username, $permission);
         (new PermissionRemoveEvent($this->username, $permission))->call();
@@ -109,7 +110,7 @@ class Session {
         $this->reloadPermissions();
     }
 
-    public function loadData() {
+    public function loadData(): void {
         GroupSystem::getInstance()->getProvider()->getGroupOfPlayer($this->username)->onCompletion(
             function(PlayerGroup $group): void {
                 $this->currentGroup = $group;
@@ -121,19 +122,19 @@ class Session {
                                 $this->permissions = $permissions;
                                 $this->loaded = true;
                                 $this->loadedSuccessful = true;
-                                if ($this->load !== null) ($this->load)($this->currentGroup, $this->groups, $this->permissions);
+                                if ($this->completion !== null) ($this->completion)($this->currentGroup, $this->groups, $this->permissions);
                             },
                             function(): void {
                                 GroupSystem::getInstance()->getLogger()->emergency("§cFailed to load permissions from §e" . $this->username);
                                 $this->loaded = true;
-                                if ($this->load !== null) ($this->load)($this->currentGroup, $this->groups, $this->permissions);
+                                if ($this->completion !== null) ($this->completion)($this->currentGroup, $this->groups, $this->permissions);
                             }
                         );
                     },
                     function(): void {
                         GroupSystem::getInstance()->getLogger()->emergency("§cFailed to load groups from §e" . $this->username);
                         $this->loaded = true;
-                        if ($this->load !== null) ($this->load)($this->currentGroup, $this->groups, $this->permissions);
+                        if ($this->completion !== null) ($this->completion)($this->currentGroup, $this->groups, $this->permissions);
                     }
                 );
             },
@@ -141,19 +142,19 @@ class Session {
                 GroupSystem::getInstance()->getLogger()->emergency("§cFailed to load group from §e" . $this->username);
                 $this->currentGroup = new PlayerGroup(GroupManager::getInstance()->getDefaultGroup());
                 $this->loaded = true;
-                if ($this->load !== null) ($this->load)($this->currentGroup, $this->groups, $this->permissions);
+                if ($this->completion !== null) ($this->completion)($this->currentGroup, $this->groups, $this->permissions);
             }
         );
     }
 
-    public function onLoad(?\Closure $load) {
-        $this->load = $load;
+    public function onLoad(?Closure $load): void {
+        $this->completion = $load;
         if ($this->loaded) {
             if ($load !== null) $load($this->currentGroup, $this->groups, $this->permissions);
         }
     }
 
-    public function update() {
+    public function update(): void {
         if ($this->currentGroup === null) return;
         $player = $this->getPlayer();
         if ($player !== null) {
@@ -166,14 +167,14 @@ class Session {
         }
     }
 
-    public function reloadPermissions() {
+    public function reloadPermissions(): void {
         if ($this->attachment === null) return;
         $this->attachment->clearPermissions();
         foreach ($this->currentGroup->getGroup()->getPermissions() as $permission) $this->attachment->setPermission(new Permission($permission), true);
         foreach ($this->permissions as $permission) $this->attachment->setPermission(new Permission($permission), true);
     }
 
-    public function tick() {
+    public function tick(): void {
         if (!$this->loaded) return;
         $group = $this->currentGroup;
         if ($group->hasExpired()) {

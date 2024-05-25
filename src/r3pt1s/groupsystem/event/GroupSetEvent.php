@@ -8,8 +8,8 @@ use pocketmine\event\Event;
 class GroupSetEvent extends Event {
 
     public function __construct(
-        private string $username,
-        private PlayerGroup $group
+        private readonly string $username,
+        private readonly PlayerGroup $group
     ) {}
 
     public function getUsername(): string {

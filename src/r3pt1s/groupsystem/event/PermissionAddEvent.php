@@ -7,8 +7,8 @@ use pocketmine\event\Event;
 class PermissionAddEvent extends Event {
 
     public function __construct(
-        private string $username,
-        private string $permission
+        private readonly string $username,
+        private readonly string $permission
     ) {}
 
     public function getUsername(): string {

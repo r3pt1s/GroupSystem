@@ -11,8 +11,8 @@ use r3pt1s\groupsystem\util\Utils;
 class PlayerRemainingGroup {
 
     public function __construct(
-        private Group $group,
-        private ?string $time = null
+        private readonly Group $group,
+        private readonly ?string $time = null
     ) {}
 
     public function getGroup(): Group {
@@ -38,7 +38,7 @@ class PlayerRemainingGroup {
         ];
     }
 
-    #[Pure] public static function fromArray(array $data): ?self {
+    public static function fromArray(array $data): ?self {
         if (isset($data["group"])) {
             if (($group = GroupManager::getInstance()->getGroupByName($data["group"])) !== null) {
                 return new self(

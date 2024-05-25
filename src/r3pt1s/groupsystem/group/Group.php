@@ -8,7 +8,7 @@ use JetBrains\PhpStorm\Pure;
 class Group {
 
     public function __construct(
-        private string $name,
+        private readonly string $name,
         private string $nameTag = "",
         private string $displayName = "",
         private string $chatFormat = "",
@@ -21,8 +21,19 @@ class Group {
         $this->colorCode = ($this->colorCode == "" ? "§7" : $this->colorCode);
     }
 
+    public function buildMysqlInsertArgs(): array {
+        return [
+            "name" => $this->name,
+            "name_tag" => $this->nameTag,
+            "display_name" => $this->displayName,
+            "chat_format" => $this->chatFormat,
+            "color_code" => $this->colorCode,
+            "permissions" => json_encode($this->permissions)
+        ];
+    }
+
     /** @internal */
-    public function apply(array $data) {
+    public function apply(array $data): void {
         $this->nameTag = $data["name_tag"];
         $this->displayName = $data["display_name"];
         $this->chatFormat = $data["chat_format"];
@@ -54,7 +65,7 @@ class Group {
         return $this->permissions;
     }
 
-    #[Pure] public function isHigher(Group $group): bool {
+    public function isHigher(Group $group): bool {
         $index = array_search($this->getName(), array_keys(GroupManager::getInstance()->getGroups()));
         $indexTwo = array_search($group->getName(), array_keys(GroupManager::getInstance()->getGroups()));
         return $index < $indexTwo;

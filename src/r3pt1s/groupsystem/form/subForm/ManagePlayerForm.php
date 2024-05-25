@@ -2,18 +2,22 @@
 
 namespace r3pt1s\groupsystem\form\subForm;
 
+use DateTime;
 use dktapps\pmforms\CustomForm;
 use dktapps\pmforms\CustomFormResponse;
 use dktapps\pmforms\element\Dropdown;
 use dktapps\pmforms\element\Input;
 use dktapps\pmforms\MenuForm;
 use dktapps\pmforms\MenuOption;
+use Exception;
+use GlobalLogger;
 use r3pt1s\groupsystem\form\MainForm;
 use r3pt1s\groupsystem\group\Group;
 use r3pt1s\groupsystem\group\GroupManager;
 use r3pt1s\groupsystem\player\PlayerGroup;
 use r3pt1s\groupsystem\player\PlayerRemainingGroup;
 use r3pt1s\groupsystem\session\Session;
+use r3pt1s\groupsystem\util\Message;
 use r3pt1s\groupsystem\util\Utils;
 use pocketmine\player\Player;
 use pocketmine\utils\TextFormat;
@@ -22,45 +26,46 @@ class ManagePlayerForm extends MenuForm {
 
     private array $options = [];
 
-    public function __construct(string $username, private PlayerGroup $currentGroup, string $message = "") {
-        $expireString = Utils::parse("raw_never");
-        if ($this->currentGroup->getExpireDate() instanceof \DateTime) $expireString = Utils::diffString(new \DateTime("now"), $this->currentGroup->getExpireDate());
+    public function __construct(string $username, private readonly PlayerGroup $currentGroup, string $message = "") {
+        $expireString = (string) Message::RAW_NEVER();
+        if ($this->currentGroup->getExpireDate() instanceof DateTime) $expireString = Utils::diffString(new DateTime("now"), $this->currentGroup->getExpireDate());
 
-        $message = $message . ($message == "" ? "" : "\n\n") . Utils::parse("manage_players_ui_text", [
-            $this->currentGroup->getGroup()->getColorCode() . $this->currentGroup->getGroup()->getName(),
-            $expireString
+        $message = $message . ($message == "" ? "" : "\n\n") . Message::MANAGE_PLAYERS_UI_TEXT()->parse([
+                $this->currentGroup->getGroup()->getColorCode() . $this->currentGroup->getGroup()->getName(),
+                $expireString
         ]);
-        $this->options[] = new MenuOption(Utils::parse("manage_players_ui_add_group"));
-        $this->options[] = new MenuOption(Utils::parse("manage_players_ui_remove_group"));
-        $this->options[] = new MenuOption(Utils::parse("manage_players_ui_skip_group"));
-        $this->options[] = new MenuOption(Utils::parse("manage_players_ui_see_groups"));
-        $this->options[] = new MenuOption(Utils::parse("manage_players_ui_add_permission"));
-        $this->options[] = new MenuOption(Utils::parse("manage_players_ui_remove_permission"));
-        $this->options[] = new MenuOption(Utils::parse("manage_players_ui_see_permissions"));
-        $this->options[] = new MenuOption(Utils::parse("manage_players_ui_back"));
 
-        parent::__construct(Utils::parse("manage_players_ui_title", [$username]), $message, $this->options, function(Player $player, int $data) use($username): void {
+        $this->options[] = new MenuOption(Message::MANAGE_PLAYERS_UI_ADD_GROUP());
+        $this->options[] = new MenuOption(Message::MANAGE_PLAYERS_UI_REMOVE_GROUP());
+        $this->options[] = new MenuOption(Message::MANAGE_PLAYERS_UI_SKIP_GROUP());
+        $this->options[] = new MenuOption(Message::MANAGE_PLAYERS_UI_SEE_GROUPS());
+        $this->options[] = new MenuOption(Message::MANAGE_PLAYERS_UI_ADD_PERMISSION());
+        $this->options[] = new MenuOption(Message::MANAGE_PLAYERS_UI_REMOVE_PERMISSION());
+        $this->options[] = new MenuOption(Message::MANAGE_PLAYERS_UI_SEE_PERMISSIONS());
+        $this->options[] = new MenuOption(Message::MANAGE_PLAYERS_UI_BACK());
+
+        parent::__construct(Message::MANAGE_PLAYERS_UI_TITLE()->parse([$username]), $message, $this->options, function(Player $player, int $data) use($username): void {
             if ($data == 0) {
-                $groups = array_values(array_map(function(Group $group): string {return $group->getColorCode() . $group->getName(); }, GroupManager::getInstance()->getGroups()));
+                $groups = array_values(array_map(fn(Group $group) => $group->getColorCode() . $group->getName(), GroupManager::getInstance()->getGroups()));
                 $player->sendForm(new CustomForm(
-                    Utils::parse("add_group_ui_title"),
+                    Message::ADD_GROUP_UI_TITLE(),
                     [
-                        new Dropdown("group", Utils::parse("add_group_ui_choose_group"), $groups),
-                        new Input("time", Utils::parse("add_group_ui_choose_time"), "1y1m1w1d12h30M30s")
+                        new Dropdown("group", Message::ADD_GROUP_UI_CHOOSE_GROUP(), $groups),
+                        new Input("time", Message::ADD_GROUP_UI_CHOOSE_TIME(), "1y1m1w1d12h30M30s")
                     ],
                     function(Player $player, CustomFormResponse $response) use($username, $groups): void {
-                        $group = GroupManager::getInstance()->getGroupByName(TextFormat::clean($groups[$response->getInt("group")], true));
+                        $group = GroupManager::getInstance()->getGroupByName(TextFormat::clean($groups[$response->getInt("group")]));
                         $time = null;
                         if (Utils::convertStringToDateFormat($response->getString("time")) !== null) $time = $response->getString("time");
                         if ($group !== null) {
                             Session::get($username)->addGroup(new PlayerRemainingGroup($group, $time), function(bool $success) use($username, $group, $player): void {
                                 if ($success) {
-                                    $player->sendForm(new self($username, $this->currentGroup, Utils::parse("group_added", [$group->getColorCode() . $group->getName(), $username])));
+                                    $player->sendForm(new self($username, $this->currentGroup, Message::GROUP_ADDED()->parse([$group->getColorCode() . $group->getName(), $username])));
                                 } else {
-                                    $player->sendForm(new self($username, $this->currentGroup, Utils::parse("group_cant_added", [$group->getColorCode() . $group->getName(), $username])));
+                                    $player->sendForm(new self($username, $this->currentGroup, Message::GROUP_CANT_ADDED()->parse([$group->getColorCode() . $group->getName(), $username])));
                                 }
                             });
-                        } else $player->sendForm(new self($username, $this->currentGroup, Utils::parse("group_doesnt_exists", [TextFormat::clean($groups[$response->getInt("group")], true)])));
+                        } else $player->sendForm(new self($username, $this->currentGroup, Message::GROUP_DOESNT_EXISTS()->parse([TextFormat::clean($groups[$response->getInt("group")])])));
                     }, function(Player $player) use($username): void {
                         $player->sendForm(new self($username, $this->currentGroup));
                     }
@@ -68,24 +73,24 @@ class ManagePlayerForm extends MenuForm {
             } else if ($data == 1) {
                 $nextFormHandler = function(Player $player, array $groups, string $username) {
                     if (count($groups) == 0) {
-                        $player->sendForm(new self($username, $this->currentGroup, Utils::parse("player_has_no_groups", [$username])));
+                        $player->sendForm(new self($username, $this->currentGroup, Message::PLAYER_HAS_NO_GROUPS()->parse([$username])));
                     } else {
                         $player->sendForm(new CustomForm(
-                            Utils::parse("remove_group_ui_title"),
+                            Message::REMOVE_GROUP_UI_TITLE(),
                             [
-                                new Dropdown("group", Utils::parse("remove_group_ui_choose_group"), $groups),
+                                new Dropdown("group", Message::REMOVE_GROUP_UI_CHOOSE_GROUP(), $groups),
                             ],
                             function(Player $player, CustomFormResponse $response) use ($username, $groups): void {
-                                $group = GroupManager::getInstance()->getGroupByName(TextFormat::clean($groups[$response->getInt("group")], true));
+                                $group = GroupManager::getInstance()->getGroupByName(TextFormat::clean($groups[$response->getInt("group")]));
                                 if ($group !== null) {
                                     Session::get($username)->removeGroup($group, function(bool $success) use($username, $group, $player): void {
                                         if ($success) {
-                                            $player->sendForm(new self($username, $this->currentGroup, Utils::parse("group_removed", [$group->getColorCode() . $group->getName(), $username])));
+                                            $player->sendForm(new self($username, $this->currentGroup, Message::GROUP_REMOVED()->parse([$group->getColorCode() . $group->getName(), $username])));
                                         } else {
-                                            $player->sendForm(new self($username, $this->currentGroup, Utils::parse("group_cant_removed", [$group->getColorCode() . $group->getName(), $username])));
+                                            $player->sendForm(new self($username, $this->currentGroup, Message::GROUP_CANT_REMOVED()->parse([$group->getColorCode() . $group->getName(), $username])));
                                         }
                                     });
-                                } else $player->sendForm(new self($username, $this->currentGroup, Utils::parse("group_doesnt_exists")));
+                                } else $player->sendForm(new self($username, $this->currentGroup, Message::GROUP_DOESNT_EXISTS()->parse([TextFormat::clean($groups[$response->getInt("group")])])));
                             }, function(Player $player) use ($username): void {
                             $player->sendForm(new self($username, $this->currentGroup));
                         }
@@ -93,35 +98,25 @@ class ManagePlayerForm extends MenuForm {
                     }
                 };
 
-                if (Session::get($username)->isLoaded()) {
-                    $groups = array_map(fn(PlayerRemainingGroup $group) => $group->getGroup()->getColorCode() . $group->getGroup()->getName(), Session::get($username)->getGroups());
-                    $nextFormHandler($player, array_values($groups), $username);
-                } else {
-                    Session::get($username)->onLoad(function(PlayerGroup $group, array $groups) use($username, $player, $nextFormHandler): void {
-                        $nextFormHandler($player, array_values($groups), $username);
-                    });
-                }
+                Session::get($username)->onLoad(function(PlayerGroup $group, array $groups) use($username, $player, $nextFormHandler): void {
+                    $nextFormHandler($player, array_values(array_map(fn(PlayerRemainingGroup $group) => $group->getGroup()->getColorCode() . $group->getGroup()->getName(), $groups)), $username);
+                });
             } else if ($data == 2) {
                 $nextFormHandler = function(Player $player, PlayerGroup $group, string $username): void {
-                    $player->sendForm(new self($username, $group, Utils::parse("group_skipped", [$username])));
+                    $player->sendForm(new self($username, $group, Message::GROUP_SKIPPED()->parse([$username])));
                 };
 
-                if (Session::get($username)->isLoaded()) {
+                Session::get($username)->onLoad(function() use($player, $username, $nextFormHandler): void {
                     Session::get($username)->nextGroup();
                     $nextFormHandler($player, Session::get($username)->getGroup(), $username);
-                } else {
-                    Session::get($username)->onLoad(function() use($player, $username, $nextFormHandler): void {
-                        Session::get($username)->nextGroup();
-                        $nextFormHandler($player, Session::get($username)->getGroup(), $username);
-                    });
-                }
+                });
             } else if ($data == 3) {
                 try {
                     $nextFormHandler = function(Player $player, array $groups, string $username) {
                         $player->sendForm(new MenuForm(
-                            Utils::parse("see_groups_ui_title"),
-                            Utils::parse("see_groups_ui_text", [$username, count($groups)]),
-                            array_map(fn(PlayerRemainingGroup $group) => new MenuOption($group->getGroup()->getColorCode() . $group->getGroup()->getName() . "\n§e" . ($group->getTime() === null ? Utils::parse("raw_never") : "§e" . $group->getTime())), $groups),
+                            Message::SEE_GROUPS_UI_TITLE(),
+                            Message::SEE_GROUPS_UI_TEXT()->parse([$username, count($groups)]),
+                            array_map(fn(PlayerRemainingGroup $group) => new MenuOption($group->getGroup()->getColorCode() . $group->getGroup()->getName() . "\n§e" . ($group->getTime() === null ? (string) Message::RAW_NEVER() : "§e" . $group->getTime())), $groups),
                             function(Player $player, int $data) use($username): void {
                                 $player->sendForm(new self($username, $this->currentGroup));
                             }, function(Player $player) use($username): void {
@@ -130,50 +125,36 @@ class ManagePlayerForm extends MenuForm {
                         ));
                     };
 
-                    if (Session::get($username)->isLoaded()) {
-                        $nextFormHandler($player, Session::get($username)->getGroups(), $username);
-                    } else {
-                        Session::get($username)->onLoad(function(PlayerGroup $group, array $groups) use($username, $player, $nextFormHandler): void {
-                            $nextFormHandler($player, $groups, $username);
-                        });
-                    }
-                } catch (\Exception $exception) {
-                    \GlobalLogger::get()->logException($exception);
+                    Session::get($username)->onLoad(function(PlayerGroup $group, array $groups) use($username, $player, $nextFormHandler): void {
+                        $nextFormHandler($player, $groups, $username);
+                    });
+                } catch (Exception $exception) {
+                    GlobalLogger::get()->logException($exception);
                 }
             } else if ($data == 4) {
                 $player->sendForm(new CustomForm(
-                    Utils::parse("add_permission_ui_title"),
-                    [new Input("permission", Utils::parse("add_permission_ui_which_permission"))],
+                    Message::ADD_PERMISSION_UI_TITLE(),
+                    [new Input("permission", Message::ADD_PERMISSION_UI_WHICH_PERMISSION())],
                     function(Player $player, CustomFormResponse $response) use($username): void {
                         $permission = $response->getString("permission");
                         if ($permission !== "") {
-                            if (Session::get($username)->isLoaded()) {
-                                Session::get($username)->onLoad(fn(PlayerGroup $group, array $groups, array $permissions) => Session::get($username)->addPermission($permission));
-                            } else {
-                                Session::get($username)->addPermission($permission);
-                            }
-
-                            $player->sendForm(new self($username, $this->currentGroup, Utils::parse("permission_added", [$username, $permission])));
-                        } else $player->sendForm(new self($username, $this->currentGroup, Utils::parse("provide_permission")));
+                            Session::get($username)->onLoad(fn(PlayerGroup $group, array $groups, array $permissions) => Session::get($username)->addPermission($permission));
+                            $player->sendForm(new self($username, $this->currentGroup, Message::PERMISSION_ADDED()->parse([$username, $permission])));
+                        } else $player->sendForm(new self($username, $this->currentGroup, Message::PROVIDE_PERMISSION()));
                     }, function(Player $player) use($username): void {
                         $player->sendForm(new self($username, $this->currentGroup));
                     }
                 ));
             } else if ($data == 5) {
                 $player->sendForm(new CustomForm(
-                    Utils::parse("remove_permission_ui_title"),
-                    [new Input("permission", Utils::parse("remove_permission_ui_which_permission"))],
+                    Message::REMOVE_PERMISSION_UI_TITLE(),
+                    [new Input("permission", Message::REMOVE_PERMISSION_UI_WHICH_PERMISSION())],
                     function(Player $player, CustomFormResponse $response) use($username): void {
                         $permission = $response->getString("permission");
                         if ($permission !== "") {
-                            if (Session::get($username)->isLoaded()) {
-                                Session::get($username)->onLoad(fn(PlayerGroup $group, array $groups, array $permissions) => Session::get($username)->removePermission($permission));
-                            } else {
-                                Session::get($username)->removePermission($permission);
-                            }
-
-                            $player->sendForm(new self($username, $this->currentGroup, Utils::parse("permission_removed", [$username, $permission])));
-                        } else $player->sendForm(new self($username, $this->currentGroup, Utils::parse("provide_permission")));
+                            Session::get($username)->onLoad(fn(PlayerGroup $group, array $groups, array $permissions) => Session::get($username)->removePermission($permission));
+                            $player->sendForm(new self($username, $this->currentGroup, Message::PERMISSION_REMOVED()->parse([$username, $permission])));
+                        } else $player->sendForm(new self($username, $this->currentGroup, Message::PROVIDE_PERMISSION()));
                     }, function(Player $player) use($username): void {
                         $player->sendForm(new self($username, $this->currentGroup));
                     }
@@ -181,8 +162,8 @@ class ManagePlayerForm extends MenuForm {
             } else if ($data == 6) {
                 $nextFormHandler = function(Player $player, array $permissions, string $username) {
                     $player->sendForm(new MenuForm(
-                        Utils::parse("see_permissions_ui_title"),
-                        Utils::parse("see_permissions_ui_text", [$username, count($permissions)]),
+                        Message::SEE_PERMISSIONS_UI_TITLE(),
+                        Message::SEE_PERMISSIONS_UI_TEXT()->parse([$username, count($permissions)]),
                         array_map(fn(string $permission) => new MenuOption("§e" . $permission), $permissions),
                         function(Player $player, int $data) use($username): void {
                             $player->sendForm(new self($username, $this->currentGroup));
@@ -192,11 +173,7 @@ class ManagePlayerForm extends MenuForm {
                     ));
                 };
 
-                if (Session::get($username)->isLoaded()) {
-                    $nextFormHandler($player, Session::get($username)->getPermissions(), $username);
-                } else {
-                    Session::get($username)->onLoad(fn(PlayerGroup $group, array $groups, array $permissions) => $nextFormHandler($player, $permissions, $username));
-                }
+                Session::get($username)->onLoad(fn(PlayerGroup $group, array $groups, array $permissions) => $nextFormHandler($player, $permissions, $username));
             } else {
                 $player->sendForm(new MainForm());
             }

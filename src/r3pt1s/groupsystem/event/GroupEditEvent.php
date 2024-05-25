@@ -7,7 +7,11 @@ use r3pt1s\groupsystem\group\Group;
 
 class GroupEditEvent extends Event {
 
-    public function __construct(private Group $group, private array $oldData, private array $newData) {}
+    public function __construct(
+        private readonly Group $group,
+        private readonly array $oldData,
+        private readonly array $newData
+    ) {}
 
     public function getGroup(): Group {
         return $this->group;

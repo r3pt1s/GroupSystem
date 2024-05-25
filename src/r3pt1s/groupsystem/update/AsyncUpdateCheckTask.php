@@ -2,11 +2,12 @@
 
 namespace r3pt1s\groupsystem\update;
 
+use Exception;
 use pocketmine\scheduler\AsyncTask;
 use pocketmine\Server;
 use pocketmine\utils\Internet;
 use r3pt1s\groupsystem\GroupSystem;
-use r3pt1s\groupsystem\util\Utils;
+use r3pt1s\groupsystem\util\Message;
 
 class AsyncUpdateCheckTask extends AsyncTask {
 
@@ -14,7 +15,7 @@ class AsyncUpdateCheckTask extends AsyncTask {
         try {
             $curl = Internet::simpleCurl("https://raw.githubusercontent.com/r3pt1s/GroupSystem/main/plugin.yml");
             $data = yaml_parse($curl->getBody());
-            if ($data == false) {
+            if (!$data) {
                 $this->setResult([false]);
             } else {
                 if (isset($data["version"])) {
@@ -23,14 +24,14 @@ class AsyncUpdateCheckTask extends AsyncTask {
                     $this->setResult([false]);
                 }
             }
-        } catch (\Exception $e) {
+        } catch (Exception) {
             $this->setResult([false]);
         }
     }
 
     public function onCompletion(): void {
-        if ($this->getResult()[0] == false) {
-            GroupSystem::getInstance()->getLogger()->error(Utils::parse("updater_error"));
+        if (!$this->getResult()[0]) {
+            GroupSystem::getInstance()->getLogger()->error(Message::UPDATER_ERROR());
             Server::getInstance()->getPluginManager()->disablePlugin(GroupSystem::getInstance());
         } else {
             $current = explode(".", UpdateChecker::getInstance()->getCurrentVersion());
@@ -49,10 +50,10 @@ class AsyncUpdateCheckTask extends AsyncTask {
             UpdateChecker::getInstance()->setData(["outdated" => $outdated, "newest_version" => $this->getResult()[0]]);
 
             if ($outdated) {
-                Server::getInstance()->getLogger()->warning(Utils::parse("updater_outdated"));
-                Server::getInstance()->getLogger()->warning(Utils::parse("updater_outdated_2", [UpdateChecker::getInstance()->getCurrentVersion(), $this->getResult()[0]]));
+                GroupSystem::getInstance()->getLogger()->warning(Message::UPDATER_OUTDATED());
+                GroupSystem::getInstance()->getLogger()->warning(Message::UPDATER_OUTDATED_2()->parse([UpdateChecker::getInstance()->getCurrentVersion(), $this->getResult()[0]]));
             } else {
-                Server::getInstance()->getLogger()->info(Utils::parse("updater_uptodate"));
+                GroupSystem::getInstance()->getLogger()->info(Message::UPDATER_UP_TO_DATE());
             }
         }
     }
