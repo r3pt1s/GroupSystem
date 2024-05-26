@@ -22,7 +22,7 @@ class Session {
 
     private bool $loaded = false;
     private bool $loadedSuccessful = false;
-    private ?Closure $completion = null;
+    private array $completionClosures = [];
     private ?PlayerGroup $currentGroup = null;
     private array $groups = [];
     private array $permissions = [];
@@ -122,19 +122,19 @@ class Session {
                                 $this->permissions = $permissions;
                                 $this->loaded = true;
                                 $this->loadedSuccessful = true;
-                                if ($this->completion !== null) ($this->completion)($this->currentGroup, $this->groups, $this->permissions);
+                                $this->invokeLoadClosures();
                             },
                             function(): void {
                                 GroupSystem::getInstance()->getLogger()->emergency("§cFailed to load permissions from §e" . $this->username);
                                 $this->loaded = true;
-                                if ($this->completion !== null) ($this->completion)($this->currentGroup, $this->groups, $this->permissions);
+                                $this->invokeLoadClosures();
                             }
                         );
                     },
                     function(): void {
                         GroupSystem::getInstance()->getLogger()->emergency("§cFailed to load groups from §e" . $this->username);
                         $this->loaded = true;
-                        if ($this->completion !== null) ($this->completion)($this->currentGroup, $this->groups, $this->permissions);
+                        $this->invokeLoadClosures();
                     }
                 );
             },
@@ -142,15 +142,19 @@ class Session {
                 GroupSystem::getInstance()->getLogger()->emergency("§cFailed to load group from §e" . $this->username);
                 $this->currentGroup = new PlayerGroup(GroupManager::getInstance()->getDefaultGroup());
                 $this->loaded = true;
-                if ($this->completion !== null) ($this->completion)($this->currentGroup, $this->groups, $this->permissions);
+                $this->invokeLoadClosures();
             }
         );
     }
 
-    public function onLoad(?Closure $load): void {
-        $this->completion = $load;
+    private function invokeLoadClosures(): void {
+        foreach ($this->completionClosures as $closure) ($closure)($this->currentGroup, $this->groups, $this->permissions);
+    }
+
+    public function onLoad(Closure $closure): void {
+        $this->completionClosures[] = $closure;
         if ($this->loaded) {
-            if ($load !== null) $load($this->currentGroup, $this->groups, $this->permissions);
+            $closure($this->currentGroup, $this->groups, $this->permissions);
         }
     }
 
