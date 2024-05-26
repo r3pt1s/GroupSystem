@@ -152,10 +152,9 @@ class Session {
     }
 
     public function onLoad(Closure $closure): void {
-        $this->completionClosures[] = $closure;
         if ($this->loaded) {
             $closure($this->currentGroup, $this->groups, $this->permissions);
-        }
+        } else $this->completionClosures[] = $closure;
     }
 
     public function update(): void {
