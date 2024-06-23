@@ -3,7 +3,6 @@
 namespace r3pt1s\groupsystem\session;
 
 use Closure;
-use JetBrains\PhpStorm\Pure;
 use pocketmine\permission\DefaultPermissions;
 use pocketmine\permission\Permission;
 use pocketmine\permission\PermissionAttachment;

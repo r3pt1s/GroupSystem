@@ -2,6 +2,7 @@
 
 namespace r3pt1s\groupsystem;
 
+use JsonException;
 use pocketmine\utils\Config;
 use pocketmine\utils\SingletonTrait;
 use r3pt1s\groupsystem\command\GroupCommand;
@@ -163,7 +164,7 @@ class GroupSystem extends PluginBase {
         if ($this->messageConfig->hasChanged()) {
             try {
                 $this->messageConfig->save();
-            } catch (\JsonException) {}
+            } catch (JsonException) {}
         }
     }
 
