@@ -11,6 +11,7 @@ use poggit\libasynql\SqlError;
 use r3pt1s\groupsystem\convert\ConfigToMySQLConverter;
 use r3pt1s\groupsystem\group\GroupManager;
 use r3pt1s\groupsystem\GroupSystem;
+use r3pt1s\groupsystem\player\perm\PlayerPermission;
 use r3pt1s\groupsystem\util\Configuration;
 use r3pt1s\groupsystem\group\Group;
 use r3pt1s\groupsystem\player\PlayerGroup;
@@ -217,38 +218,46 @@ final class MySQLProvider implements Provider {
         return $resolver->getPromise();
     }
 
-    public function addPermission(string $username, string $permission): void {
+    public function addPermission(string $username, PlayerPermission $permission): void {
         $permissions = $this->getPermissions($username);
         $permissions->onCompletion(function(array $permissions) use($username, $permission): void {
-            if (!in_array($permission, $permissions)) $permissions[] = $permission;
+            if (!in_array($permission, $permissions)) $permissions[] = $permission->toString();
             $this->connector->executeChange("player.updatePermissions", [
-                "username" => $username, "permissions" => json_encode($permissions)
+                "username" => $username, "permissions" => json_encode(array_values($permissions))
             ]);
         }, function(): void {});
     }
 
-    public function removePermission(string $username, string $permission): void {
+    public function removePermission(string $username, PlayerPermission|string $permission): void {
         $permissions = $this->getPermissions($username);
         $permissions->onCompletion(function(array $permissions) use($username, $permission): void {
+            $permission = $permission instanceof PlayerPermission ? $permission->toString() : $permission;
             if (in_array($permission, $permissions)) unset($permissions[array_search($permission, $permissions)]);
             $this->connector->executeChange("player.updatePermissions", [
-                "username" => $username, "permissions" => json_encode($permissions)
+                "username" => $username, "permissions" => json_encode(array_values($permissions))
             ]);
         }, function(): void {});
     }
 
-    public function getPermissions(string $username): Promise {
+    public function getPermissions(string $username, bool $asInstance = false): Promise {
         $resolver = new PromiseResolver();
 
         $this->connector->executeSelect("player.getPermissions", [
             "username" => $username
-        ], function (array $rows) use($resolver): void {
+        ], function (array $rows) use($resolver, $asInstance): void {
             if (count($rows) == 0) {
                 $resolver->resolve([]);
                 return;
             }
 
-            $resolver->resolve(json_decode($rows[0]["permissions"], true));
+            if ($asInstance) {
+                $permissions = [];
+                foreach (json_decode($rows[0]["permissions"], true) as $permission) {
+                    $permissions[] = PlayerPermission::fromString($permission);
+                }
+
+                $resolver->resolve($permissions);
+            } else $resolver->resolve(json_decode($rows[0]["permissions"], true));
         });
 
         return $resolver->getPromise();

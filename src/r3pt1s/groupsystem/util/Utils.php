@@ -3,8 +3,19 @@
 namespace r3pt1s\groupsystem\util;
 
 use DateTime;
+use Exception;
 
 class Utils {
+
+    public static function isTimeString(string $string, ?DateTime &$object = null): bool {
+        if (trim($string) == "") return false;
+        try {
+            $object = new DateTime($string);
+            return true;
+        } catch (Exception) {
+            return false;
+        }
+    }
 
     public static function convertStringToDateFormat(string $format, ?DateTime $time = null, string $type = "add"): ?DateTime {
         if ($format == "") return null;

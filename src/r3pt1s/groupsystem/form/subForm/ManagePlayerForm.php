@@ -14,6 +14,7 @@ use GlobalLogger;
 use r3pt1s\groupsystem\form\MainForm;
 use r3pt1s\groupsystem\group\Group;
 use r3pt1s\groupsystem\group\GroupManager;
+use r3pt1s\groupsystem\player\perm\PlayerPermission;
 use r3pt1s\groupsystem\player\PlayerGroup;
 use r3pt1s\groupsystem\player\PlayerRemainingGroup;
 use r3pt1s\groupsystem\session\Session;
@@ -134,11 +135,16 @@ class ManagePlayerForm extends MenuForm {
             } else if ($data == 4) {
                 $player->sendForm(new CustomForm(
                     Message::ADD_PERMISSION_UI_TITLE(),
-                    [new Input("permission", Message::ADD_PERMISSION_UI_WHICH_PERMISSION())],
+                    [
+                        new Input("permission", Message::ADD_PERMISSION_UI_WHICH_PERMISSION()),
+                        new Input("time", Message::ADD_PERMISSION_UI_CHOOSE_TIME(), "1y1m1w1d12h30M30s")
+                    ],
                     function(Player $player, CustomFormResponse $response) use($username): void {
                         $permission = $response->getString("permission");
+                        $time = null;
+                        if (($obj = Utils::convertStringToDateFormat($response->getString("time"))) !== null) $time = $obj;
                         if ($permission !== "") {
-                            Session::get($username)->onLoad(fn(PlayerGroup $group, array $groups, array $permissions) => Session::get($username)->addPermission($permission));
+                            Session::get($username)->onLoad(fn(PlayerGroup $group, array $groups, array $permissions) => Session::get($username)->addPermission(new PlayerPermission($permission, $time)));
                             $player->sendForm(new self($username, $this->currentGroup, Message::PERMISSION_ADDED()->parse([$username, $permission])));
                         } else $player->sendForm(new self($username, $this->currentGroup, Message::PROVIDE_PERMISSION()));
                     }, function(Player $player) use($username): void {
@@ -160,11 +166,12 @@ class ManagePlayerForm extends MenuForm {
                     }
                 ));
             } else if ($data == 6) {
+                /** @var array<PlayerPermission> $permissions */
                 $nextFormHandler = function(Player $player, array $permissions, string $username) {
                     $player->sendForm(new MenuForm(
                         Message::SEE_PERMISSIONS_UI_TITLE(),
                         Message::SEE_PERMISSIONS_UI_TEXT()->parse([$username, count($permissions)]),
-                        array_map(fn(string $permission) => new MenuOption("§e" . $permission), $permissions),
+                        array_map(fn(PlayerPermission $permission) => new MenuOption("§e" . $permission->getPermission() . ($permission->getExpireDate() !== null ? "\n§c" . $permission->getExpireDate()->format("Y-m-d H:i:s") : "")), $permissions),
                         function(Player $player, int $data) use($username): void {
                             $player->sendForm(new self($username, $this->currentGroup));
                         }, function(Player $player) use($username): void {

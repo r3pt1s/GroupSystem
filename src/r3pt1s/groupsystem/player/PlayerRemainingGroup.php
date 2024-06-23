@@ -15,6 +15,10 @@ class PlayerRemainingGroup {
         private readonly ?string $time = null
     ) {}
 
+    public function getName(): string {
+        return $this->group->getName();
+    }
+
     public function getGroup(): Group {
         return $this->group;
     }

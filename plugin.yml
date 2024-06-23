@@ -1,5 +1,11 @@
 name: GroupSystem
-version: 3.3.0
+version: 3.3.1
 api: 5.0.0
 main: r3pt1s\groupsystem\GroupSystem
 author: r3pt1s
+
+permissions:
+  groupsystem.groupinfo.command:
+    default: true
+  groupsystem.group.command:
+    default: op

@@ -8,6 +8,7 @@ mysql:
   database: "your_database"
 DefaultGroup: Player
 Update-Check: true
+InGameDebugging: false
 # Example: /home/GroupSystem/
 # Default: plugin_data/GroupSystem/
 Groups-Path: default

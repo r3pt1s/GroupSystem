@@ -5,6 +5,7 @@ namespace r3pt1s\groupsystem\provider;
 use Closure;
 use pocketmine\promise\Promise;
 use r3pt1s\groupsystem\group\Group;
+use r3pt1s\groupsystem\player\perm\PlayerPermission;
 use r3pt1s\groupsystem\player\PlayerGroup;
 use r3pt1s\groupsystem\player\PlayerRemainingGroup;
 
@@ -38,11 +39,11 @@ interface Provider {
 
     public function getGroupsOfPlayer(string $username, bool $asInstance = false): Promise;
 
-    public function addPermission(string $username, string $permission): void;
+    public function addPermission(string $username, PlayerPermission $permission): void;
 
-    public function removePermission(string $username, string $permission): void;
+    public function removePermission(string $username, PlayerPermission|string $permission): void;
 
-    public function getPermissions(string $username): Promise;
+    public function getPermissions(string $username, bool $asInstance = false): Promise;
 
     public function checkPlayer(string $username): Promise;
 }

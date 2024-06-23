@@ -3,16 +3,12 @@
 namespace r3pt1s\groupsystem;
 
 use pocketmine\utils\Config;
-use pocketmine\utils\MainLogger;
 use pocketmine\utils\SingletonTrait;
 use r3pt1s\groupsystem\command\GroupCommand;
 use r3pt1s\groupsystem\command\GroupInfoCommand;
 use r3pt1s\groupsystem\group\GroupManager;
 use r3pt1s\groupsystem\listener\EventListener;
 use r3pt1s\groupsystem\listener\TagsListener;
-use pocketmine\permission\DefaultPermissions;
-use pocketmine\permission\Permission;
-use pocketmine\permission\PermissionManager;
 use pocketmine\plugin\PluginBase;
 use r3pt1s\groupsystem\provider\JSONProvider;
 use r3pt1s\groupsystem\provider\MySQLProvider;
@@ -22,7 +18,6 @@ use r3pt1s\groupsystem\session\SessionManager;
 use r3pt1s\groupsystem\task\SessionTickTask;
 use r3pt1s\groupsystem\update\UpdateChecker;
 use r3pt1s\groupsystem\util\Configuration;
-use r3pt1s\groupsystem\util\Message;
 
 class GroupSystem extends PluginBase {
     use SingletonTrait;
@@ -54,11 +49,9 @@ class GroupSystem extends PluginBase {
         $this->updateChecker = new UpdateChecker(Configuration::getInstance()->isDoUpdateCheck());
         $this->sessionManager = new SessionManager();
 
-        DefaultPermissions::registerPermission(new Permission("groupsystem.group.command"), [PermissionManager::getInstance()->getPermission(DefaultPermissions::ROOT_OPERATOR)]);
-
         $this->getServer()->getCommandMap()->registerAll("GroupSystem", [
-            new GroupCommand("group", "Group Command", "", ["rank", "rang"]),
-            new GroupInfoCommand("groupinfo", "GroupInfo Command")
+            new GroupCommand(),
+            new GroupInfoCommand()
         ]);
 
         $this->getScheduler()->scheduleRepeatingTask(new SessionTickTask(), 20);
@@ -125,6 +118,7 @@ class GroupSystem extends PluginBase {
             "see_groups_ui_text" => "§7The player §e{%0} §7has §e{%1} groups§7!",
             "add_permission_ui_title" => "§aAdd permission",
             "add_permission_ui_which_permission" => "§7Which permission would you add?",
+            "add_permission_ui_choose_time" => "§7Choose a time §8(§cLeave it blank for lifetime§8)",
             "remove_permission_ui_title" => "§cRemove permission",
             "remove_permission_ui_which_permission" => "§7Which permission would you remove?",
             "see_permissions_ui_title" => "§eSee permissions",
@@ -162,6 +156,15 @@ class GroupSystem extends PluginBase {
         ];
 
         $this->messageConfig = new Config(Configuration::getInstance()->getMessagesPath() . "messages.yml", 2, $messages);
+        foreach ($messages as $k => $v) {
+            if (!$this->messageConfig->exists($k)) $this->messageConfig->set($k, $v);
+        }
+
+        if ($this->messageConfig->hasChanged()) {
+            try {
+                $this->messageConfig->save();
+            } catch (\JsonException) {}
+        }
     }
 
     public function getSessionManager(): SessionManager {

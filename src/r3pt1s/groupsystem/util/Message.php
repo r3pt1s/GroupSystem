@@ -62,6 +62,7 @@ use r3pt1s\groupsystem\GroupSystem;
  * @method static Message SEE_GROUPS_UI_TEXT()
  * @method static Message ADD_PERMISSION_UI_TITLE()
  * @method static Message ADD_PERMISSION_UI_WHICH_PERMISSION()
+ * @method static Message ADD_PERMISSION_UI_CHOOSE_TIME()
  * @method static Message REMOVE_PERMISSION_UI_TITLE()
  * @method static Message REMOVE_PERMISSION_UI_WHICH_PERMISSION()
  * @method static Message SEE_PERMISSIONS_UI_TITLE()
@@ -157,6 +158,7 @@ final class Message {
         self::_registryRegister("see_groups_ui_text", new self("see_groups_ui_text"));
         self::_registryRegister("add_permission_ui_title", new self("add_permission_ui_title"));
         self::_registryRegister("add_permission_ui_which_permission", new self("add_permission_ui_which_permission"));
+        self::_registryRegister("add_permission_ui_choose_time", new self("add_permission_ui_choose_time"));
         self::_registryRegister("remove_permission_ui_title", new self("remove_permission_ui_title"));
         self::_registryRegister("remove_permission_ui_which_permission", new self("remove_permission_ui_which_permission"));
         self::_registryRegister("see_permissions_ui_title", new self("see_permissions_ui_title"));

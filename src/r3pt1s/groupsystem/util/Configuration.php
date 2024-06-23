@@ -14,6 +14,7 @@ class Configuration {
     private Config $config;
     private string $defaultGroup = "Player";
     private bool $doUpdateCheck = true;
+    private bool $inGameDebugging = false;
     private string $provider = "json";
     private array $mysql = [
         "host" => "localhost",
@@ -39,6 +40,10 @@ class Configuration {
 
         if ($this->config->exists("Update-Check")) {
             $this->doUpdateCheck = boolval($this->config->get("Update-Check", true));
+        }
+
+        if ($this->config->exists("InGameDebugging")) {
+            $this->inGameDebugging = boolval($this->config->get("InGameDebugging", true));
         }
 
         $this->provider = $this->config->get("provider", $this->provider);
@@ -77,6 +82,10 @@ class Configuration {
 
     public function isDoUpdateCheck(): bool {
         return $this->doUpdateCheck;
+    }
+
+    public function isInGameDebugging(): bool {
+        return $this->inGameDebugging;
     }
 
     public function getProvider(): string {

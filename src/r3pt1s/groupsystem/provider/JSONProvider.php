@@ -12,6 +12,7 @@ use r3pt1s\groupsystem\convert\ConfigOldToConfigNewConverter;
 use r3pt1s\groupsystem\group\Group;
 use r3pt1s\groupsystem\group\GroupManager;
 use r3pt1s\groupsystem\GroupSystem;
+use r3pt1s\groupsystem\player\perm\PlayerPermission;
 use r3pt1s\groupsystem\player\PlayerGroup;
 use r3pt1s\groupsystem\player\PlayerRemainingGroup;
 use r3pt1s\groupsystem\util\Configuration;
@@ -217,12 +218,12 @@ final class JSONProvider implements Provider {
         return $resolver->getPromise();
     }
 
-    public function addPermission(string $username, string $permission): void {
+    public function addPermission(string $username, PlayerPermission $permission): void {
         $permissions = $this->getPermissions($username);
         $permissions->onCompletion(function(array $permissions) use($username, $permission): void {
-            if (!in_array($permission, $permissions)) $permissions[] = $permission;
+            if (!in_array($permission, $permissions)) $permissions[] = $permission->toString();
             $file = $this->getPlayerFile($username);
-            $file->set("permissions", $permissions);
+            $file->set("permissions", array_values($permissions));
             try {
                 $file->save();
             } catch (JsonException $e) {
@@ -231,12 +232,13 @@ final class JSONProvider implements Provider {
         }, function(): void {});
     }
 
-    public function removePermission(string $username, string $permission): void {
+    public function removePermission(string $username, PlayerPermission|string $permission): void {
         $permissions = $this->getPermissions($username);
         $permissions->onCompletion(function(array $permissions) use($username, $permission): void {
+            $permission = $permission instanceof PlayerPermission ? $permission->toString() : $permission;
             if (in_array($permission, $permissions)) unset($permissions[array_search($permission, $permissions)]);
             $file = $this->getPlayerFile($username);
-            $file->set("permissions", $permissions);
+            $file->set("permissions", array_values($permissions));
             try {
                 $file->save();
             } catch (JsonException $e) {
@@ -245,12 +247,12 @@ final class JSONProvider implements Provider {
         }, function(): void {});
     }
 
-    public function getPermissions(string $username): Promise {
+    public function getPermissions(string $username, bool $asInstance = false): Promise {
         $permissions = [];
         $resolver = new PromiseResolver();
 
         foreach ($this->getPlayerFile($username)->get("permissions", []) as $permission) {
-            $permissions[] = $permission;
+            $permissions[] = ($asInstance ? PlayerPermission::fromString($permission) : $permission);
         }
 
         $resolver->resolve($permissions);

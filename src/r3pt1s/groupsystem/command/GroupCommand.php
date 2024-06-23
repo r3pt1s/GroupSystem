@@ -9,13 +9,12 @@ use r3pt1s\groupsystem\GroupSystem;
 use r3pt1s\groupsystem\util\Message;
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
-use pocketmine\lang\Translatable;
 use pocketmine\player\Player;
 
 class GroupCommand extends Command implements PluginOwned {
 
-    public function __construct(string $name, Translatable|string $description = "", Translatable|string|null $usageMessage = null, array $aliases = []) {
-        parent::__construct($name, $description, $usageMessage, $aliases);
+    public function __construct() {
+        parent::__construct("group", "Group Command", "", ["rank", "rang"]);
         $this->setPermission("groupsystem.group.command");
     }
 

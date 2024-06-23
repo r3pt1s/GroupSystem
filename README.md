@@ -4,17 +4,18 @@ Manage permissions and ranks of the players!
 
 ## Features
 - **Full-Custom** Messages
-- **Time**-Ranks
+- **Temp**-Ranks
+- **Temp**-Permissions
 - **Custom** Paths
 - **ScoreHud** Support
 - **Update** Checker
 - **MySQL** Support
 
 ## Commands
-| Usage      | Description                        | Permission      |
-|------------|------------------------------------|-----------------|
-| /group     | Manage the groups and player       | group.command   |
-| /groupinfo | See your group and the expire date | No Permission   |
+| Usage      | Description                        | Permission                                    |
+|------------|------------------------------------|-----------------------------------------------|
+| /group     | Manage the groups and player       | groupsystem.group.command                     |
+| /groupinfo | See your group and the expire date | groupsystem.groupinfo.command (default: true) |
 
 ## ScoreHud Tags
 | Tag                      | Description                            |

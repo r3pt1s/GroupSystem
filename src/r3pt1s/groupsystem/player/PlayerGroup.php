@@ -54,7 +54,7 @@ class PlayerGroup {
                 try {
                     return new self(
                         $group,
-                        (isset($data["expire"]) ? (is_int($data["expire"]) ? new \DateTime(date("Y-m-d H:i:s", $data["expire"])) : new \DateTime($data["expire"])) : null)
+                        (isset($data["expire"]) ? (is_int($data["expire"]) ? new DateTime(date("Y-m-d H:i:s", $data["expire"])) : new DateTime($data["expire"])) : null)
                     );
                 } catch (Exception) {}
             }
