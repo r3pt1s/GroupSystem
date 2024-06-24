@@ -36,6 +36,7 @@ mysql:
   database: "your_database"
 DefaultGroup: Player
 Update-Check: true
+InGameDebugging: false
 # Example: /home/GroupSystem/
 # Default: plugin_data/GroupSystem/
 Groups-Path: default
@@ -145,4 +146,5 @@ see_available_group_title: §e{%0}
 see_available_group_text: '§7Name: §e{%0}{line}§r§7NameTag: §e{%1}{line}§r§7DisplayName:
   §e{%2}{line}§r§7ChatFormat: §e{%3}{line}§r§7Permissions:{line}§e{%4}'
 see_available_group_back: §4Back
+add_permission_ui_choose_time: §7Choose a time §8(§cLeave it blank for lifetime§8)
 ```
