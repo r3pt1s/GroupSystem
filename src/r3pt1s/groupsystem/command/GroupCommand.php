@@ -2,7 +2,6 @@
 
 namespace r3pt1s\groupsystem\command;
 
-use JetBrains\PhpStorm\Pure;
 use pocketmine\plugin\PluginOwned;
 use r3pt1s\groupsystem\form\MainForm;
 use r3pt1s\groupsystem\GroupSystem;
@@ -11,10 +10,10 @@ use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
 use pocketmine\player\Player;
 
-class GroupCommand extends Command implements PluginOwned {
+final class GroupCommand extends Command implements PluginOwned {
 
     public function __construct() {
-        parent::__construct("group", "Group Command", "", ["rank", "rang"]);
+        parent::__construct("group", "Group Command", "", ["rank"]);
         $this->setPermission("groupsystem.group.command");
     }
 
@@ -29,7 +28,7 @@ class GroupCommand extends Command implements PluginOwned {
         return true;
     }
 
-    #[Pure] public function getOwningPlugin(): GroupSystem {
+    public function getOwningPlugin(): GroupSystem {
         return GroupSystem::getInstance();
     }
 }

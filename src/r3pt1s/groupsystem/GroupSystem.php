@@ -3,6 +3,7 @@
 namespace r3pt1s\groupsystem;
 
 use JsonException;
+use pocketmine\plugin\PluginBase;
 use pocketmine\utils\Config;
 use pocketmine\utils\SingletonTrait;
 use r3pt1s\groupsystem\command\GroupCommand;
@@ -10,18 +11,19 @@ use r3pt1s\groupsystem\command\GroupInfoCommand;
 use r3pt1s\groupsystem\group\GroupManager;
 use r3pt1s\groupsystem\listener\EventListener;
 use r3pt1s\groupsystem\listener\TagsListener;
-use pocketmine\plugin\PluginBase;
-use r3pt1s\groupsystem\provider\JSONProvider;
-use r3pt1s\groupsystem\provider\MySQLProvider;
+use r3pt1s\groupsystem\provider\impl\JSONProvider;
+use r3pt1s\groupsystem\provider\impl\MySQLProvider;
+use r3pt1s\groupsystem\provider\impl\YAMLProvider;
 use r3pt1s\groupsystem\provider\Provider;
-use r3pt1s\groupsystem\provider\YAMLProvider;
 use r3pt1s\groupsystem\session\SessionManager;
 use r3pt1s\groupsystem\task\SessionTickTask;
 use r3pt1s\groupsystem\update\UpdateChecker;
 use r3pt1s\groupsystem\util\Configuration;
 
-class GroupSystem extends PluginBase {
+final class GroupSystem extends PluginBase {
     use SingletonTrait;
+
+    //todo: revamp permission system (add permission and remove (added) permission to -> grant & revoke permission)
 
     private Configuration $configuration;
     private Provider $provider;
@@ -30,21 +32,22 @@ class GroupSystem extends PluginBase {
     private SessionManager $sessionManager;
     private Config $messageConfig;
 
-    protected function onEnable(): void {
+    protected function onLoad(): void {
         self::setInstance($this);
 
         $this->saveDefaultConfig();
         $this->configuration = new Configuration($this->getConfig());
 
         $this->fetchMessages();
+    }
 
+    protected function onEnable(): void {
         $this->provider = match (strtolower(Configuration::getInstance()->getProvider())) {
             "yml" => new YAMLProvider(),
             "mysql" => new MySQLProvider(),
             default => new JSONProvider()
-        };
-
-        $this->provider->tryConvert();
+        }; //TODO: ProviderRegistry
+        $this->provider->tryMigrate();
 
         $this->groupManager = new GroupManager();
         $this->updateChecker = new UpdateChecker(Configuration::getInstance()->isDoUpdateCheck());
@@ -164,7 +167,10 @@ class GroupSystem extends PluginBase {
         if ($this->messageConfig->hasChanged()) {
             try {
                 $this->messageConfig->save();
-            } catch (JsonException) {}
+            } catch (JsonException $e) {
+                $this->getLogger()->error("§cFailed to save messages file: §e" . $e->getMessage());
+                $this->getLogger()->logException($e);
+            }
         }
     }
 

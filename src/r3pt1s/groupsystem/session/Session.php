@@ -20,7 +20,9 @@ use r3pt1s\groupsystem\player\PlayerGroup;
 use r3pt1s\groupsystem\player\PlayerRemainingGroup;
 use r3pt1s\groupsystem\util\Configuration;
 
-class Session {
+final class Session {
+
+    # todo: revamp this mess wth
 
     private bool $loaded = false;
     private bool $loadedSuccessful = false;

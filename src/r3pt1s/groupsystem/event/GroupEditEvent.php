@@ -2,11 +2,13 @@
 
 namespace r3pt1s\groupsystem\event;
 
+use pocketmine\event\Cancellable;
+use pocketmine\event\CancellableTrait;
 use pocketmine\event\Event;
 use r3pt1s\groupsystem\group\Group;
 
-class GroupEditEvent extends Event {
-
+final class GroupEditEvent extends Event implements Cancellable {
+    use CancellableTrait;
     public function __construct(
         private readonly Group $group,
         private readonly array $oldData,

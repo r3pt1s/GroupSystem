@@ -9,7 +9,7 @@ use r3pt1s\groupsystem\group\Group;
 use r3pt1s\groupsystem\group\GroupManager;
 use r3pt1s\groupsystem\util\Utils;
 
-class PlayerGroup {
+final class PlayerGroup {
 
     public function __construct(
         private readonly Group $group,

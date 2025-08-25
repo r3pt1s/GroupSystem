@@ -5,8 +5,16 @@ namespace r3pt1s\groupsystem\group;
 use JetBrains\PhpStorm\ArrayShape;
 use JetBrains\PhpStorm\Pure;
 
-class Group {
+final class Group {
 
+    /**
+     * @param string $name
+     * @param string $nameTag
+     * @param string $displayName
+     * @param string $chatFormat
+     * @param string $colorCode
+     * @param array $permissions
+     */
     public function __construct(
         private readonly string $name,
         private string $nameTag = "",

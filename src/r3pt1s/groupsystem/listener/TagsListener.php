@@ -17,7 +17,7 @@ use r3pt1s\groupsystem\session\SessionManager;
 use r3pt1s\groupsystem\util\Message;
 use r3pt1s\groupsystem\util\Utils;
 
-class TagsListener implements Listener {
+final class TagsListener implements Listener {
 
     public function onResolve(TagsResolveEvent $event): void {
         $tag = $event->getTag();

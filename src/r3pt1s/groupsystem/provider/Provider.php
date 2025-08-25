@@ -11,7 +11,7 @@ use r3pt1s\groupsystem\player\PlayerRemainingGroup;
 
 interface Provider {
 
-    public function tryConvert(): void;
+    public function tryMigrate(): void;
 
     public function createGroup(Group $group): void;
 

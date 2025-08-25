@@ -5,7 +5,7 @@ namespace r3pt1s\groupsystem\session;
 use pocketmine\player\Player;
 use pocketmine\utils\SingletonTrait;
 
-class SessionManager {
+final class SessionManager {
     use SingletonTrait;
 
     /** @var array<Session> */

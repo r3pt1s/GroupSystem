@@ -9,7 +9,7 @@ use pocketmine\utils\Internet;
 use r3pt1s\groupsystem\GroupSystem;
 use r3pt1s\groupsystem\util\Message;
 
-class AsyncUpdateCheckTask extends AsyncTask {
+final class AsyncUpdateCheckTask extends AsyncTask {
 
     public function onRun(): void {
         try {

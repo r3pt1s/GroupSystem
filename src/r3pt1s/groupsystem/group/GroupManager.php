@@ -8,11 +8,11 @@ use r3pt1s\groupsystem\event\GroupCreateEvent;
 use r3pt1s\groupsystem\event\GroupEditEvent;
 use r3pt1s\groupsystem\event\GroupRemoveEvent;
 use r3pt1s\groupsystem\GroupSystem;
-use r3pt1s\groupsystem\provider\JSONProvider;
-use r3pt1s\groupsystem\provider\YAMLProvider;
+use r3pt1s\groupsystem\provider\impl\JSONProvider;
+use r3pt1s\groupsystem\provider\impl\YAMLProvider;
 use r3pt1s\groupsystem\util\Configuration;
 
-class GroupManager {
+final class GroupManager {
     use SingletonTrait;
 
     /** @var array<Group> */
@@ -34,9 +34,11 @@ class GroupManager {
     }
 
     public function createGroup(Group $group): void {
-        GroupSystem::getInstance()->getProvider()->createGroup($group);
-        (new GroupCreateEvent($group))->call();
-        if (!isset($this->groups[$group->getName()])) $this->groups[$group->getName()] = $group;
+        if (!isset($this->groups[$group->getName()])) {
+            GroupSystem::getInstance()->getProvider()->createGroup($group);
+            (new GroupCreateEvent($group))->call();
+            $this->groups[$group->getName()] = $group;
+        }
     }
 
     public function removeGroup(Group $group): void {

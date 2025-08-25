@@ -5,7 +5,7 @@ namespace r3pt1s\groupsystem\player\perm;
 use DateTime;
 use r3pt1s\groupsystem\util\Utils;
 
-class PlayerPermission {
+final class PlayerPermission {
 
     public function __construct(
         private readonly string $permission,

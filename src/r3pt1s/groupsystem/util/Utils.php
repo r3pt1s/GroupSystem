@@ -5,7 +5,7 @@ namespace r3pt1s\groupsystem\util;
 use DateTime;
 use Exception;
 
-class Utils {
+final class Utils {
 
     public static function isTimeString(string $string, ?DateTime &$object = null): bool {
         if (trim($string) == "") return false;
@@ -19,7 +19,7 @@ class Utils {
 
     public static function convertStringToDateFormat(string $format, ?DateTime $time = null, string $type = "add"): ?DateTime {
         if ($format == "") return null;
-        $result = ($time === null ? new DateTime("now") : $time);
+        $result = ($time === null ? new DateTime() : $time);
         $parts = str_split($format);
         $timeUnits = ["y" => "year", "m" => "month", "w" => "week", "d" => "day", "h" => "hour", "M" => "minute", "i" => "minute", "s" => "second"];
         $i = -1;

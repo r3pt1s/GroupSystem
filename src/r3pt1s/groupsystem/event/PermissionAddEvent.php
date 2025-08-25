@@ -2,11 +2,13 @@
 
 namespace r3pt1s\groupsystem\event;
 
+use pocketmine\event\Cancellable;
+use pocketmine\event\CancellableTrait;
 use pocketmine\event\Event;
 use r3pt1s\groupsystem\player\perm\PlayerPermission;
 
-class PermissionAddEvent extends Event {
-
+final class PermissionAddEvent extends Event implements Cancellable {
+    use CancellableTrait;
     public function __construct(
         private readonly string $username,
         private readonly PlayerPermission $permission

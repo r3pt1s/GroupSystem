@@ -21,7 +21,7 @@ use pocketmine\event\player\PlayerQuitEvent;
 use pocketmine\scheduler\ClosureTask;
 use pocketmine\Server;
 
-class EventListener implements Listener {
+final class EventListener implements Listener {
 
     public function onLogin(PlayerLoginEvent $event): void {
         $player = $event->getPlayer();

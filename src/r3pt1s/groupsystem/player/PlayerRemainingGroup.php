@@ -8,7 +8,7 @@ use r3pt1s\groupsystem\group\Group;
 use r3pt1s\groupsystem\group\GroupManager;
 use r3pt1s\groupsystem\util\Utils;
 
-class PlayerRemainingGroup {
+final class PlayerRemainingGroup {
 
     public function __construct(
         private readonly Group $group,

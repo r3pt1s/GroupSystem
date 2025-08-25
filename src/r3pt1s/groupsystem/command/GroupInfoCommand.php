@@ -3,7 +3,6 @@
 namespace r3pt1s\groupsystem\command;
 
 use DateTime;
-use JetBrains\PhpStorm\Pure;
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
 use pocketmine\player\Player;
@@ -13,7 +12,7 @@ use r3pt1s\groupsystem\session\Session;
 use r3pt1s\groupsystem\util\Message;
 use r3pt1s\groupsystem\util\Utils;
 
-class GroupInfoCommand extends Command implements PluginOwned {
+final class GroupInfoCommand extends Command implements PluginOwned {
 
     public function __construct() {
         parent::__construct("groupinfo", "GroupInfo Command");
@@ -30,7 +29,7 @@ class GroupInfoCommand extends Command implements PluginOwned {
         return true;
     }
 
-    #[Pure] public function getOwningPlugin(): GroupSystem {
+    public function getOwningPlugin(): GroupSystem {
         return GroupSystem::getInstance();
     }
 }

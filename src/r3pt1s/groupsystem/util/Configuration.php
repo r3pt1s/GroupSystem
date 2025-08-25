@@ -4,13 +4,14 @@ namespace r3pt1s\groupsystem\util;
 
 use Exception;
 use pocketmine\utils\Config;
+use pocketmine\utils\SingletonTrait;
 use r3pt1s\groupsystem\GroupSystem;
 
-class Configuration {
+final class Configuration {
+    use SingletonTrait;
 
     public const PROVIDERS = ["json", "yml", "mysql"];
 
-    private static self $instance;
     private Config $config;
     private string $defaultGroup = "Player";
     private bool $doUpdateCheck = true;
@@ -28,7 +29,7 @@ class Configuration {
     private string $messagesPath;
 
     public function __construct(Config $config) {
-        self::$instance = $this;
+        self::setInstance($this);
         $this->config = $config;
         $this->load();
     }
@@ -106,9 +107,5 @@ class Configuration {
 
     public function getMessagesPath(): string {
         return $this->messagesPath;
-    }
-
-    public static function getInstance(): Configuration {
-        return self::$instance;
     }
 }
