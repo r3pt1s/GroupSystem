@@ -8,9 +8,9 @@ use Ifera\ScoreHud\event\TagsResolveEvent;
 use Ifera\ScoreHud\scoreboard\ScoreTag;
 use pocketmine\event\Listener;
 use pocketmine\Server;
-use r3pt1s\groupsystem\event\GroupEditEvent;
-use r3pt1s\groupsystem\event\GroupRemoveEvent;
-use r3pt1s\groupsystem\event\GroupSetEvent;
+use r3pt1s\groupsystem\event\group\GroupEditEvent;
+use r3pt1s\groupsystem\event\group\GroupRemoveEvent;
+use r3pt1s\groupsystem\event\player\PlayerGroupSetEvent;
 use r3pt1s\groupsystem\group\GroupManager;
 use r3pt1s\groupsystem\session\Session;
 use r3pt1s\groupsystem\session\SessionManager;
@@ -39,7 +39,7 @@ final class TagsListener implements Listener {
         }
     }
 
-    public function onSet(GroupSetEvent $event): void {
+    public function onSet(PlayerGroupSetEvent $event): void {
         $player = Server::getInstance()->getPlayerExact($event->getUsername());
         $group = $event->getGroup();
 
@@ -62,7 +62,7 @@ final class TagsListener implements Listener {
     public function onEdit(GroupEditEvent $event): void {
         $group = $event->getGroup();
 
-        foreach (array_filter(SessionManager::getInstance()->getSessions(), fn(Session $session) => $session->isLoaded() && $session->getPlayer() !== null) as $session) {
+        foreach (array_filter(SessionManager::getInstance()->getSessions(), fn(Session $session) => $session->isInitialized() && $session->getPlayer() !== null) as $session) {
             if ($session->getGroup()->getGroup()->getName() == $group->getName()) {
                 $ev = new PlayerTagsUpdateEvent(
                     $session->getPlayer(),
@@ -77,7 +77,7 @@ final class TagsListener implements Listener {
         $group = $event->getGroup();
         $default = GroupManager::getInstance()->getDefaultGroup();
 
-        foreach (array_filter(SessionManager::getInstance()->getSessions(), fn(Session $session) => $session->isLoaded() && $session->getPlayer() !== null) as $session) {
+        foreach (array_filter(SessionManager::getInstance()->getSessions(), fn(Session $session) => $session->isInitialized() && $session->getPlayer() !== null) as $session) {
             if ($session->getGroup()->getGroup()->getName() == $group->getName()) {
                 $ev = new PlayerTagsUpdateEvent(
                     $session->getPlayer(),

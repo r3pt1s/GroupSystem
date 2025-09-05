@@ -36,7 +36,7 @@ final class JSONProvider implements Provider {
 
     public function createGroup(Group $group): void {
         if (!$this->file->exists($group->getName())) {
-            $this->file->set($group->getName(), $group->toArray());
+            $this->file->set($group->getName(), $group->write());
             try {
                 $this->file->save();
             } catch (JsonException $e) {
@@ -76,7 +76,7 @@ final class JSONProvider implements Provider {
     public function getGroupByName(string $name): Promise {
         $resolver = new PromiseResolver();
 
-        if ($this->file->exists($name) && ($group = Group::fromArray($this->file->get($name, []))) !== null) {
+        if ($this->file->exists($name) && ($group = Group::read($this->file->get($name, []))) !== null) {
             $resolver->resolve($group);
         } else $resolver->reject();
 
@@ -87,12 +87,8 @@ final class JSONProvider implements Provider {
         $groups = [];
         $resolver = new PromiseResolver();
 
-
         foreach ($this->file->getAll() as $name => $groupData) {
-            if (!isset($groupData["group"])) $groupData["group"] = $name;
-            if (($group = Group::fromArray($groupData)) !== null) {
-                $groups[$group->getName()] = $group;
-            }
+            $groups[$name] = Group::read($groupData);
         }
 
         $resolver->resolve($groups);
@@ -119,7 +115,7 @@ final class JSONProvider implements Provider {
 
     public function setGroup(string $username, PlayerGroup $group): void {
         $file = $this->getPlayerFile($username);
-        foreach ($group->toArray() as $k => $v) $file->set($k, $v);
+        foreach ($group->write() as $k => $v) $file->set($k, $v);
         try {
             $file->save();
         } catch (JsonException $e) {
@@ -136,7 +132,7 @@ final class JSONProvider implements Provider {
                 return;
             }
 
-            $groups[$group->getGroup()->getName()] = $group->toArray();
+            $groups[$group->getGroup()->getName()] = $group->write();
             $file = $this->getPlayerFile($username);
             $file->set("groups", $groups);
             try {
@@ -198,7 +194,7 @@ final class JSONProvider implements Provider {
         $resolver = new PromiseResolver();
 
         $file = $this->getPlayerFile($username);
-        if (($group = PlayerGroup::fromArray($file->getAll())) !== null) {
+        if (($group = PlayerGroup::read($file->getAll())) !== null) {
             $resolver->resolve($group);
         } else $resolver->reject();
 
@@ -210,7 +206,7 @@ final class JSONProvider implements Provider {
         $resolver = new PromiseResolver();
 
         foreach ($this->getPlayerFile($username)->get("groups", []) as $groupData) {
-            if (($group = PlayerRemainingGroup::fromArray($groupData)) !== null) {
+            if (($group = PlayerRemainingGroup::read($groupData)) !== null) {
                 $groups[$group->getGroup()->getName()] = ($asInstance ? $group : $groupData);
             }
         }
@@ -222,7 +218,7 @@ final class JSONProvider implements Provider {
     public function addPermission(string $username, PlayerPermission $permission): void {
         $permissions = $this->getPermissions($username);
         $permissions->onCompletion(function(array $permissions) use($username, $permission): void {
-            if (!in_array($permission, $permissions)) $permissions[] = $permission->toString();
+            if (!in_array($permission, $permissions)) $permissions[] = $permission->write();
             $file = $this->getPlayerFile($username);
             $file->set("permissions", array_values($permissions));
             try {
@@ -236,7 +232,7 @@ final class JSONProvider implements Provider {
     public function removePermission(string $username, PlayerPermission|string $permission): void {
         $permissions = $this->getPermissions($username);
         $permissions->onCompletion(function(array $permissions) use($username, $permission): void {
-            $permission = $permission instanceof PlayerPermission ? $permission->toString() : $permission;
+            $permission = $permission instanceof PlayerPermission ? $permission->write() : $permission;
             if (in_array($permission, $permissions)) unset($permissions[array_search($permission, $permissions)]);
             $file = $this->getPlayerFile($username);
             $file->set("permissions", array_values($permissions));
@@ -253,7 +249,7 @@ final class JSONProvider implements Provider {
         $resolver = new PromiseResolver();
 
         foreach ($this->getPlayerFile($username)->get("permissions", []) as $permission) {
-            $permissions[] = ($asInstance ? PlayerPermission::fromString($permission) : $permission);
+            $permissions[] = ($asInstance ? PlayerPermission::read($permission) : $permission);
         }
 
         $resolver->resolve($permissions);

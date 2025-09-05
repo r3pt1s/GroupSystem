@@ -73,7 +73,7 @@ final class MySQLProvider implements Provider {
             }
 
             $rows[0]["permissions"] = json_decode($rows[0]["permissions"], true);
-            if (($group = Group::fromArray($rows[0])) !== null) {
+            if (($group = Group::read($rows[0])) !== null) {
                 $resolver->resolve($group);
             } else $resolver->reject();
         }, fn(SqlError $error) => $resolver->reject());
@@ -93,7 +93,7 @@ final class MySQLProvider implements Provider {
             $groups = [];
             foreach ($rows as $data) {
                 $data["permissions"] = json_decode($data["permissions"], true);
-                if (($group = Group::fromArray($data)) !== null) {
+                if (($group = Group::read($data)) !== null) {
                     $groups[$group->getName()] = $group;
                 }
             }
@@ -116,7 +116,7 @@ final class MySQLProvider implements Provider {
 
     public function setGroup(string $username, PlayerGroup $group): void {
         $this->connector->executeChange("player.setGroup", array_merge(
-            ["username" => $username], $group->toArray()
+            ["username" => $username], $group->write()
         ));
     }
 
@@ -129,7 +129,7 @@ final class MySQLProvider implements Provider {
                 return;
             }
 
-            $groups[$group->getGroup()->getName()] = $group->toArray();
+            $groups[$group->getGroup()->getName()] = $group->write();
             $this->connector->executeChange("player.updateGroups", [
                 "username" => $username, "groups" => json_encode($groups)
             ], fn (int $affectedRows) => $resolver->resolve(true), fn(SqlError $error) => $resolver->reject());
@@ -186,7 +186,7 @@ final class MySQLProvider implements Provider {
                 return;
             }
 
-            if (($group = PlayerGroup::fromArray($rows[0])) !== null) {
+            if (($group = PlayerGroup::read($rows[0])) !== null) {
                 $resolver->resolve($group);
             } else $resolver->reject();
         }, fn(SqlError $error) => $resolver->reject());
@@ -208,7 +208,7 @@ final class MySQLProvider implements Provider {
             $data = json_decode($rows[0]["groups"], true);
             $groups = [];
             foreach ($data as $groupData) {
-                if (($group = PlayerRemainingGroup::fromArray($groupData)) !== null) {
+                if (($group = PlayerRemainingGroup::read($groupData)) !== null) {
                     $groups[$group->getGroup()->getName()] = ($asInstance ? $group : $groupData);
                 }
             }
@@ -222,7 +222,7 @@ final class MySQLProvider implements Provider {
     public function addPermission(string $username, PlayerPermission $permission): void {
         $permissions = $this->getPermissions($username);
         $permissions->onCompletion(function(array $permissions) use($username, $permission): void {
-            if (!in_array($permission, $permissions)) $permissions[] = $permission->toString();
+            if (!in_array($permission, $permissions)) $permissions[] = $permission->write();
             $this->connector->executeChange("player.updatePermissions", [
                 "username" => $username, "permissions" => json_encode(array_values($permissions))
             ]);
@@ -232,7 +232,7 @@ final class MySQLProvider implements Provider {
     public function removePermission(string $username, PlayerPermission|string $permission): void {
         $permissions = $this->getPermissions($username);
         $permissions->onCompletion(function(array $permissions) use($username, $permission): void {
-            $permission = $permission instanceof PlayerPermission ? $permission->toString() : $permission;
+            $permission = $permission instanceof PlayerPermission ? $permission->write() : $permission;
             if (in_array($permission, $permissions)) unset($permissions[array_search($permission, $permissions)]);
             $this->connector->executeChange("player.updatePermissions", [
                 "username" => $username, "permissions" => json_encode(array_values($permissions))
@@ -254,7 +254,7 @@ final class MySQLProvider implements Provider {
             if ($asInstance) {
                 $permissions = [];
                 foreach (json_decode($rows[0]["permissions"], true) as $permission) {
-                    $permissions[] = PlayerPermission::fromString($permission);
+                    $permissions[] = PlayerPermission::read($permission);
                 }
 
                 $resolver->resolve($permissions);

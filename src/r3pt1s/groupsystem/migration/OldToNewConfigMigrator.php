@@ -44,11 +44,7 @@ final class OldToNewConfigMigrator implements Migrator {
 
             if ($anyOld) {
                 GroupSystem::getInstance()->getLogger()->notice("§rConverting data from §eold config files §rto §enew config files§r...");
-                $groups = [];
-                foreach ($groupsFile->getAll() as $key => $data) {
-                    $groups[$key] = Utils::renewGroupDataKeys($data);
-                }
-
+                $groups = array_map(fn(array $data) => Utils::renewGroupDataKeys($data), $groupsFile->getAll());
                 if (file_exists(Configuration::getInstance()->getGroupsPath() . "groups." . $extension)) rename(Configuration::getInstance()->getGroupsPath() . "groups." . $extension, Configuration::getInstance()->getGroupsPath() . "old_groups." . $extension);
                 try {
                     file_put_contents(Configuration::getInstance()->getGroupsPath() . "groups." . $extension, match ($extension) {

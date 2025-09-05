@@ -35,21 +35,25 @@ final class PlayerRemainingGroup {
         );
     }
 
-    #[Pure] #[ArrayShape(["group" => "string", "time" => "null|string"])] public function toArray(): array {
+    #[Pure] #[ArrayShape(["group" => "string", "time" => "null|string"])] public function write(): array {
         return [
             "group" => $this->group->getName(),
             "time" => $this->time
         ];
     }
 
-    public static function fromArray(array $data): ?self {
-        if (isset($data["group"])) {
-            if (($group = GroupManager::getInstance()->getGroupByName($data["group"])) !== null) {
-                return new self(
-                    $group,
-                    is_string(($data["time"] ?? null)) ? $data["time"] : null
-                );
-            }
+    public static function read(array $data): ?self {
+        Utils::checkArrayKeysValuesType($data, [
+            "group", "time"
+        ], [
+            "string", "NULL|string"
+        ]);
+
+        if (($group = GroupManager::getInstance()->getGroupByName($data["group"])) !== null) {
+            return new self(
+                $group,
+                is_string(($data["time"] ?? null)) ? $data["time"] : null
+            );
         }
         return null;
     }

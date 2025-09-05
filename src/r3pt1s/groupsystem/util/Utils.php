@@ -4,8 +4,15 @@ namespace r3pt1s\groupsystem\util;
 
 use DateTime;
 use Exception;
+use InvalidArgumentException;
 
 final class Utils {
+
+    public const OLD_PLAYER_DATA_KEYS = ["Group", "ExpireAt", "Groups", "Permissions"];
+    public const NEW_PLAYER_DATA_KEYS = ["group", "expire", "groups", "permissions"];
+
+    public const OLD_GROUP_DATA_KEYS = ["NameTag", "DisplayName", "ChatFormat", "ColorCode", "Permissions"];
+    public const NEW_GROUP_DATA_KEYS = ["name_tag", "display_name", "chat_format", "color_code", "permissions"];
 
     public static function isTimeString(string $string, ?DateTime &$object = null): bool {
         if (trim($string) == "") return false;
@@ -58,10 +65,28 @@ final class Utils {
         }
     }
 
+    public static function checkArrayKeysValuesType(array $array, array $keys, array $allowedValueTypes, string $typeSeparator = "|"): void {
+        foreach ($keys as $i => $key) {
+            if (!array_key_exists($i, $allowedValueTypes))
+                throw new InvalidArgumentException("No type definition found for key at index $i ($key).");
+            if (!array_key_exists($key, $array))
+                throw new InvalidArgumentException("Missing required key '$key' in array.");
+
+            $allowedValueTypesI = explode($typeSeparator, $allowedValueTypes[$i]);
+            $actualType = gettype($array[$key]);
+
+            if (!in_array($actualType, $allowedValueTypesI, true))
+                throw new InvalidArgumentException(
+                    "Invalid type for key '$key': expected " .
+                    implode(", ", $allowedValueTypesI) .
+                    " but got $actualType."
+                );
+        }
+    }
+
     public static function renameAndRemove(array $data, array $from, array $to): array {
         foreach ($from as $i => $v) {
-            if (!isset($to[$i])) continue;
-            if (!isset($data[$v])) continue;
+            if (!isset($to[$i]) || !isset($data[$v])) continue;
             $data[$to[$i]] = $data[$v];
             unset($data[$v]);
         }
@@ -69,18 +94,10 @@ final class Utils {
     }
 
     public static function renewPlayerDataKeys(array $data): array {
-        return self::renameAndRemove($data, [
-            "Group", "ExpireAt", "Groups", "Permissions"
-        ], [
-            "group", "expire", "groups", "permissions"
-        ]);
+        return self::renameAndRemove($data, self::OLD_PLAYER_DATA_KEYS, self::NEW_PLAYER_DATA_KEYS);
     }
 
     public static function renewGroupDataKeys(array $data): array {
-        return self::renameAndRemove($data, [
-            "NameTag", "DisplayName", "ChatFormat", "ColorCode", "Permissions"
-        ], [
-            "name_tag", "display_name", "chat_format", "color_code", "permissions"
-        ]);
+        return self::renameAndRemove($data, self::OLD_GROUP_DATA_KEYS, self::NEW_GROUP_DATA_KEYS);
     }
 }

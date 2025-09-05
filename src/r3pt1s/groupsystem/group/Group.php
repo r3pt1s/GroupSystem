@@ -3,18 +3,10 @@
 namespace r3pt1s\groupsystem\group;
 
 use JetBrains\PhpStorm\ArrayShape;
-use JetBrains\PhpStorm\Pure;
+use r3pt1s\groupsystem\util\Utils;
 
 final class Group {
 
-    /**
-     * @param string $name
-     * @param string $nameTag
-     * @param string $displayName
-     * @param string $chatFormat
-     * @param string $colorCode
-     * @param array $permissions
-     */
     public function __construct(
         private readonly string $name,
         private string $nameTag = "",
@@ -24,7 +16,7 @@ final class Group {
         private array $permissions = []
     ) {
         $this->nameTag = ($this->nameTag == "" ? "§7§l" . $this->name . " §r§8| §7{name}" : $this->nameTag);
-        $this->displayName = ($this->displayName == "" ? "§l§7{name}" : $this->displayName);
+        $this->displayName = ($this->displayName == "" ? "{name}" : $this->displayName);
         $this->chatFormat = ($this->chatFormat == "" ? "§7§l" . $this->name . " §r§8| §7{name} §r§8» §r§f{msg}" : $this->chatFormat);
         $this->colorCode = ($this->colorCode == "" ? "§7" : $this->colorCode);
     }
@@ -79,7 +71,7 @@ final class Group {
         return $index < $indexTwo;
     }
 
-    #[ArrayShape(["name" => "string", "display_name" => "string", "name_tag" => "string", "chat_format" => "string", "color_code" => "string", "permissions" => "array"])] public function toArray(): array {
+    #[ArrayShape(["name" => "string", "display_name" => "string", "name_tag" => "string", "chat_format" => "string", "color_code" => "string", "permissions" => "array"])] public function write(): array {
         return [
             "name" => $this->name,
             "display_name" => $this->displayName,
@@ -90,17 +82,20 @@ final class Group {
         ];
     }
 
-    #[Pure] public static function fromArray(array $data): ?self {
-        if (isset($data["name"]) && isset($data["display_name"]) && isset($data["name_tag"]) && isset($data["chat_format"]) && isset($data["color_code"]) && isset($data["permissions"]) && is_array($data["permissions"])) {
-            return new self(
-                $data["name"],
-                $data["name_tag"],
-                $data["display_name"],
-                $data["chat_format"],
-                $data["color_code"],
-                $data["permissions"]
-            );
-        }
-        return null;
+    public static function read(array $data): self {
+        Utils::checkArrayKeysValuesType($data, [
+            "name", "display_name", "name_tag", "chat_format", "color_code", "permissions"
+        ], [
+            "string", "string", "string", "string", "string", "array"
+        ]);
+
+        return new self(
+            $data["name"],
+            $data["name_tag"],
+            $data["display_name"],
+            $data["chat_format"],
+            $data["color_code"],
+            $data["permissions"]
+        );
     }
 }

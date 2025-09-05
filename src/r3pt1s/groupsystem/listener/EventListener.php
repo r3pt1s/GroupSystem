@@ -3,23 +3,23 @@
 namespace r3pt1s\groupsystem\listener;
 
 use DateTime;
+use pocketmine\event\Listener;
+use pocketmine\event\player\PlayerChatEvent;
+use pocketmine\event\player\PlayerDisplayNameChangeEvent;
 use pocketmine\event\player\PlayerJoinEvent;
 use pocketmine\event\player\PlayerLoginEvent;
+use pocketmine\event\player\PlayerQuitEvent;
 use pocketmine\player\chat\LegacyRawChatFormatter;
-use r3pt1s\groupsystem\event\GroupEditEvent;
-use r3pt1s\groupsystem\event\GroupRemoveEvent;
-use r3pt1s\groupsystem\event\GroupSetEvent;
+use pocketmine\scheduler\ClosureTask;
+use pocketmine\Server;
+use r3pt1s\groupsystem\event\group\GroupEditEvent;
+use r3pt1s\groupsystem\event\group\GroupRemoveEvent;
+use r3pt1s\groupsystem\event\player\PlayerGroupSetEvent;
 use r3pt1s\groupsystem\GroupSystem;
 use r3pt1s\groupsystem\session\Session;
 use r3pt1s\groupsystem\session\SessionManager;
 use r3pt1s\groupsystem\util\Message;
 use r3pt1s\groupsystem\util\Utils;
-use pocketmine\event\Listener;
-use pocketmine\event\player\PlayerChatEvent;
-use pocketmine\event\player\PlayerDisplayNameChangeEvent;
-use pocketmine\event\player\PlayerQuitEvent;
-use pocketmine\scheduler\ClosureTask;
-use pocketmine\Server;
 
 final class EventListener implements Listener {
 
@@ -67,7 +67,7 @@ final class EventListener implements Listener {
         ));
     }
 
-    public function onSet(GroupSetEvent $event): void {
+    public function onSet(PlayerGroupSetEvent $event): void {
         $player = Server::getInstance()->getPlayerExact($event->getUsername());
         if ($player !== null) {
             $expireString = (string) Message::RAW_NEVER();
@@ -77,7 +77,7 @@ final class EventListener implements Listener {
     }
 
     public function onRemove(GroupRemoveEvent $event): void {
-        foreach (array_filter(SessionManager::getInstance()->getSessions(), fn(Session $session) => $session->isLoaded() && $session->getPlayer() !== null) as $session) {
+        foreach (array_filter(SessionManager::getInstance()->getSessions(), fn(Session $session) => $session->isInitialized() && $session->getPlayer() !== null) as $session) {
             if ($session->getGroup()->getGroup()->getName() == $event->getGroup()->getName()) {
                 $session->nextGroup();
             }
@@ -85,7 +85,7 @@ final class EventListener implements Listener {
     }
 
     public function onEdit(GroupEditEvent $event): void {
-        foreach (array_filter(SessionManager::getInstance()->getSessions(), fn(Session $session) => $session->isLoaded() && $session->getPlayer() !== null) as $session) {
+        foreach (array_filter(SessionManager::getInstance()->getSessions(), fn(Session $session) => $session->isInitialized() && $session->getPlayer() !== null) as $session) {
             if ($session->getGroup()->getGroup()->getName() == $event->getGroup()->getName()) {
                 $session->update();
             }

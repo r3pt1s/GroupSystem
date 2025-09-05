@@ -1,20 +1,33 @@
+# The data provider you want to use to store and retrieve player & group data.
 # mysql, json, yml
 provider: json
+
+# Your MySQL login, if provider is set to 'mysql'
 mysql:
   host: "localhost"
   port: 3306
   username: "root"
   password: "your_password"
   database: "your_database"
+
+# The default group used for every player
 DefaultGroup: Player
+# When enabled, the plugin checks itself for updates
 Update-Check: true
+# When enabled, debugs shown in the console (if debug log level > 1 in your pocketmine.yml) are also shown in-game
 InGameDebugging: false
+# Where your groups are saved (directory only)
 # Example: /home/GroupSystem/
 # Default: plugin_data/GroupSystem/
 Groups-Path: default
+# Where all the player data is saved (directory only)
 # Example: /home/GroupSystem/players/
 # Default: plugin_data/GroupSystem/players/
 Players-Path: default
+# Where all the group data is saved (directory only)
 # Example: /home/GroupSystem/
 # Default: plugin_data/GroupSystem/
 Messages-Path: default
+# How much time a player session has to retrieve its data before it gets kicked
+# Default: 5 (in seconds)
+Session-Timeout: 5

@@ -12,9 +12,8 @@ use r3pt1s\groupsystem\group\GroupManager;
 use r3pt1s\groupsystem\listener\EventListener;
 use r3pt1s\groupsystem\listener\TagsListener;
 use r3pt1s\groupsystem\provider\impl\JSONProvider;
-use r3pt1s\groupsystem\provider\impl\MySQLProvider;
-use r3pt1s\groupsystem\provider\impl\YAMLProvider;
 use r3pt1s\groupsystem\provider\Provider;
+use r3pt1s\groupsystem\provider\ProviderRegistry;
 use r3pt1s\groupsystem\session\SessionManager;
 use r3pt1s\groupsystem\task\SessionTickTask;
 use r3pt1s\groupsystem\update\UpdateChecker;
@@ -39,14 +38,18 @@ final class GroupSystem extends PluginBase {
         $this->configuration = new Configuration($this->getConfig());
 
         $this->fetchMessages();
+
+        ProviderRegistry::registerDefault();
     }
 
     protected function onEnable(): void {
-        $this->provider = match (strtolower(Configuration::getInstance()->getProvider())) {
-            "yml" => new YAMLProvider(),
-            "mysql" => new MySQLProvider(),
-            default => new JSONProvider()
-        }; //TODO: ProviderRegistry
+        $chosenProvider = ProviderRegistry::get($provId = strtolower(Configuration::getInstance()->getProvider()));
+        if ($chosenProvider === null) {
+            $chosenProvider = new JSONProvider();
+            $this->getLogger()->info("No provider with id '$provId' found, using default provider. §8(§bjson§8)");
+        }
+
+        $this->provider = $chosenProvider;
         $this->provider->tryMigrate();
 
         $this->groupManager = new GroupManager();

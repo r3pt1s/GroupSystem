@@ -28,7 +28,7 @@ final class ConfigToMySQLMigrator implements Migrator {
             $groups = $groupsFile->getAll();
             foreach ($groups as $key => $groupData) {
                 $groupData = Utils::renewGroupDataKeys($groupData);
-                if (($group = Group::fromArray($groupData)) !== null) {
+                if (($group = Group::read($groupData)) !== null) {
                     $provider->checkGroup($group->getName())->onCompletion(function (bool $exists) use($group, $provider): void {
                         if (!$exists) $provider->createGroup($group);
                     }, fn() => GroupSystem::getInstance()->getLogger()->warning("§cFailed to convert group §e" . $key . " §cfrom config files to §bMySQL§c!"));

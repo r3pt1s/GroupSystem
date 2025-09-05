@@ -27,6 +27,7 @@ final class Configuration {
     private string $groupsPath;
     private string $playersPath;
     private string $messagesPath;
+    private int $sessionTimeout = 5;
 
     public function __construct(Config $config) {
         self::setInstance($this);
@@ -71,6 +72,11 @@ final class Configuration {
             if (@file_exists($this->config->get("Messages-Path"))) $this->messagesPath = $this->config->get("Messages-Path");
             else $this->messagesPath = GroupSystem::getInstance()->getDataFolder();
         } else $this->messagesPath = GroupSystem::getInstance()->getDataFolder();
+
+        if ($this->config->exists("SessionTimeout")) {
+            if (is_numeric($this->config->get("Session-Timeout", $this))) $this->sessionTimeout = intval($this->config->get("Session-Timeout", $this->sessionTimeout));
+            if ($this->sessionTimeout <= 0) $this->sessionTimeout = 5;
+        }
     }
 
     public function getConfig(): Config {
@@ -107,5 +113,9 @@ final class Configuration {
 
     public function getMessagesPath(): string {
         return $this->messagesPath;
+    }
+
+    public function getSessionTimeout(): int {
+        return $this->sessionTimeout;
     }
 }

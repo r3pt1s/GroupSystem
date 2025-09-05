@@ -25,7 +25,7 @@ final class PlayerPermission {
         return $this->expireDate;
     }
 
-    public function toString(): string {
+    public function write(): string {
         if ($this->expireDate === null) return $this->permission;
         return $this->permission . "#" . $this->expireDate->format("Y-m-d H:i:s");
     }
@@ -34,7 +34,7 @@ final class PlayerPermission {
         return "PlayerPermission(permission=" . $this->permission . ",expire=" . ($this->expireDate?->format("Y-m-d H:i:s") ?? "null") . ")";
     }
 
-    public static function fromString(string $data): ?self {
+    public static function read(string $data): ?self {
         $explode = explode("#", $data);
         $last = trim($explode[array_key_last($explode)]);
         $expire = null;

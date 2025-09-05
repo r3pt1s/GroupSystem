@@ -8,6 +8,6 @@ use r3pt1s\groupsystem\session\SessionManager;
 final class SessionTickTask extends Task {
 
     public function onRun(): void {
-        foreach (SessionManager::getInstance()->getSessions() as $session) $session->tick();
+        SessionManager::getInstance()->tick();
     }
 }
