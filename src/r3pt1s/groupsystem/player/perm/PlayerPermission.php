@@ -9,7 +9,8 @@ final class PlayerPermission {
 
     public function __construct(
         private readonly string $permission,
-        private readonly DateTime|null $expireDate = null
+        private readonly DateTime|null $expireDate = null,
+        private readonly bool $granted = true
     ) {}
 
     public function hasExpired(): bool {
@@ -25,21 +26,25 @@ final class PlayerPermission {
         return $this->expireDate;
     }
 
+    public function isGranted(): bool {
+        return $this->granted;
+    }
+
+    public function isRevoked(): bool {
+        return !$this->granted;
+    }
+
     public function write(): string {
         if ($this->expireDate === null) return $this->permission;
-        return $this->permission . "#" . $this->expireDate->format("Y-m-d H:i:s");
+        return $this->permission . "#" . $this->expireDate->format("Y-m-d H:i:s") . ($this->granted ? "" : "#false");
     }
 
     public function __toString(): string {
-        return "PlayerPermission(permission=" . $this->permission . ",expire=" . ($this->expireDate?->format("Y-m-d H:i:s") ?? "null") . ")";
+        return "PlayerPermission(permission=" . $this->permission . ",expire=" . ($this->expireDate?->format("Y-m-d H:i:s") ?? "null") . ",granted=" . ($this->granted ? "true" : "false") . ")";
     }
 
     public static function read(string $data): ?self {
-        $explode = explode("#", $data);
-        $last = trim($explode[array_key_last($explode)]);
-        $expire = null;
-        if (Utils::isTimeString($last, $expireObject)) $expire = $expireObject;
-        $permissionString = substr($data, 0, strlen($data) - ($expire instanceof DateTime ? strlen($last) + 1 : 0));
-        return new self($permissionString, $expire);
+        [$permission, $expireDate, $granted] = Utils::parsePermissionString($data);
+        return new self($permission, $expireDate, $granted);
     }
 }

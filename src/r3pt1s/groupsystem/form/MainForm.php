@@ -17,6 +17,8 @@ use pocketmine\player\Player;
 
 final class MainForm extends MenuForm {
 
+    //todo: revamp forms (wth)
+
     public function __construct(string $message = "") {
         parent::__construct(
             Message::MAIN_UI_TITLE(),

@@ -49,7 +49,7 @@ use r3pt1s\groupsystem\GroupSystem;
  * @method static Message MANAGE_PLAYERS_UI_REMOVE_GROUP()
  * @method static Message MANAGE_PLAYERS_UI_SKIP_GROUP()
  * @method static Message MANAGE_PLAYERS_UI_SEE_GROUPS()
- * @method static Message MANAGE_PLAYERS_UI_ADD_PERMISSION()
+ * @method static Message MANAGE_PLAYERS_UI_UPDATE_PERMISSION()
  * @method static Message MANAGE_PLAYERS_UI_REMOVE_PERMISSION()
  * @method static Message MANAGE_PLAYERS_UI_SEE_PERMISSIONS()
  * @method static Message MANAGE_PLAYERS_UI_BACK()

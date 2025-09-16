@@ -215,12 +215,19 @@ final class JSONProvider implements Provider {
         return $resolver->getPromise();
     }
 
-    public function addPermission(string $username, PlayerPermission $permission): void {
+    public function updatePermission(string $username, PlayerPermission $permission): void {
         $permissions = $this->getPermissions($username);
         $permissions->onCompletion(function(array $permissions) use($username, $permission): void {
-            if (!in_array($permission, $permissions)) $permissions[] = $permission->write();
+            foreach ($permissions as $i => $actualPermission) {
+                if (str_contains($actualPermission, $permission->getPermission())) {
+                    unset($permissions[$i]);
+                }
+            }
+
+            $permissions = array_values($permissions);
+            $permissions[] = $permission->write();
             $file = $this->getPlayerFile($username);
-            $file->set("permissions", array_values($permissions));
+            $file->set("permissions", $permissions);
             try {
                 $file->save();
             } catch (JsonException $e) {

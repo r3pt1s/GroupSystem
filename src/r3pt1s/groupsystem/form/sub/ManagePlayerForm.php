@@ -42,7 +42,7 @@ final class ManagePlayerForm extends MenuForm {
                 new MenuOption(Message::MANAGE_PLAYERS_UI_REMOVE_GROUP()),
                 new MenuOption(Message::MANAGE_PLAYERS_UI_SKIP_GROUP()),
                 new MenuOption(Message::MANAGE_PLAYERS_UI_SEE_GROUPS()),
-                new MenuOption(Message::MANAGE_PLAYERS_UI_ADD_PERMISSION()),
+                new MenuOption(Message::MANAGE_PLAYERS_UI_UPDATE_PERMISSION()),
                 new MenuOption(Message::MANAGE_PLAYERS_UI_REMOVE_PERMISSION()),
                 new MenuOption(Message::MANAGE_PLAYERS_UI_SEE_PERMISSIONS()),
                 new MenuOption(Message::MANAGE_PLAYERS_UI_BACK())

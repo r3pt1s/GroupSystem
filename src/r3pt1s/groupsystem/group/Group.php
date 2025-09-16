@@ -7,6 +7,9 @@ use r3pt1s\groupsystem\util\Utils;
 
 final class Group {
 
+    private array $grantedPermissions = [];
+    private array $revokedPermissions = [];
+
     public function __construct(
         private readonly string $name,
         private string $nameTag = "",
@@ -19,6 +22,21 @@ final class Group {
         $this->displayName = ($this->displayName == "" ? "{name}" : $this->displayName);
         $this->chatFormat = ($this->chatFormat == "" ? "§7§l" . $this->name . " §r§8| §7{name} §r§8» §r§f{msg}" : $this->chatFormat);
         $this->colorCode = ($this->colorCode == "" ? "§7" : $this->colorCode);
+
+        $this->resortPermissions();
+    }
+
+    protected function resortPermissions(): void {
+        $grantedPermissions = [];
+        $revokedPermissions = [];
+        foreach ($this->permissions as $permissionString) {
+            [$permission, $expireDate, $granted] = Utils::parsePermissionString($permissionString);
+            if ($granted) $grantedPermissions[] = $permission;
+            else $revokedPermissions[] = $permission;
+        }
+
+        $this->grantedPermissions = $grantedPermissions;
+        $this->revokedPermissions = $revokedPermissions;
     }
 
     public function buildMysqlInsertArgs(): array {
@@ -28,7 +46,7 @@ final class Group {
             "display_name" => $this->displayName,
             "chat_format" => $this->chatFormat,
             "color_code" => $this->colorCode,
-            "permissions" => json_encode($this->permissions)
+            "permissions" => $this->permissions
         ];
     }
 
@@ -38,7 +56,9 @@ final class Group {
         $this->displayName = $data["display_name"];
         $this->chatFormat = $data["chat_format"];
         $this->colorCode = $data["color_code"];
+
         $this->permissions = $data["permissions"];
+        $this->resortPermissions();
     }
 
     public function getName(): string {
@@ -63,6 +83,14 @@ final class Group {
 
     public function getPermissions(): array {
         return $this->permissions;
+    }
+
+    public function getGrantedPermissions(): array {
+        return $this->grantedPermissions;
+    }
+
+    public function getRevokedPermissions(): array {
+        return $this->revokedPermissions;
     }
 
     public function isHigher(Group $group): bool {

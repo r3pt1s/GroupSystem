@@ -219,12 +219,20 @@ final class MySQLProvider implements Provider {
         return $resolver->getPromise();
     }
 
-    public function addPermission(string $username, PlayerPermission $permission): void {
+    public function updatePermission(string $username, PlayerPermission $permission): void {
         $permissions = $this->getPermissions($username);
         $permissions->onCompletion(function(array $permissions) use($username, $permission): void {
-            if (!in_array($permission, $permissions)) $permissions[] = $permission->write();
+            foreach ($permissions as $i => $actualPermission) {
+                if (str_contains($actualPermission, $permission->getPermission())) {
+                    unset($permissions[$i]);
+                }
+            }
+
+            $permissions = array_values($permissions);
+            $permissions[] = $permission->write();
+
             $this->connector->executeChange("player.updatePermissions", [
-                "username" => $username, "permissions" => json_encode(array_values($permissions))
+                "username" => $username, "permissions" => json_encode($permissions)
             ]);
         }, function(): void {});
     }

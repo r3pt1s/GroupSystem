@@ -39,7 +39,7 @@ interface Provider {
 
     public function getGroupsOfPlayer(string $username, bool $asInstance = false): Promise;
 
-    public function addPermission(string $username, PlayerPermission $permission): void;
+    public function updatePermission(string $username, PlayerPermission $permission): void;
 
     public function removePermission(string $username, PlayerPermission|string $permission): void;
 

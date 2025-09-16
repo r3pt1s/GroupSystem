@@ -223,15 +223,19 @@ final class Session {
         return $groups[0] ?? null;
     }
 
-    public function addPermission(PlayerPermission $permission): void {
-        $this->debug("Adding permission %s", [$permission->getPermission()]);
-        if (in_array($permission, $this->permissions)) {
-            $this->debug("Failed to add permission %s", [$permission->getPermission()]);
-            return;
+    public function updatePermission(PlayerPermission $permission): void {
+        $this->debug("Updating permission %s", [$permission->getPermission()]);
+        foreach ($this->permissions as $i => $actualPermission) {
+            if ($actualPermission->getPermission() == $permission->getPermission()) {
+                unset($this->permissions[$i]);
+            }
         }
 
-        GroupSystem::getInstance()->getProvider()->addPermission($this->username, $permission);
-        ($ev = new PlayerPermissionGrantEvent($this->username, $permission))->call();
+        $this->permissions = array_values($this->permissions);
+
+        GroupSystem::getInstance()->getProvider()->updatePermission($this->username, $permission);
+        if ($permission->isGranted()) ($ev = new PlayerPermissionGrantEvent($this->username, $permission))->call();
+        else ($ev = new PlayerPermissionRevokeEvent($this->username, $permission))->call();
         if ($ev->isCancelled()) {
             $this->logger->notice("Cancelled the addition of permission {$permission->getPermission()} for this session: Event cancelled");
             return;
@@ -250,12 +254,6 @@ final class Session {
         }
 
         GroupSystem::getInstance()->getProvider()->removePermission($this->username, $permission);
-        ($ev = new PlayerPermissionRevokeEvent($this->username, $permission))->call();
-        if ($ev->isCancelled()) {
-            $this->logger->notice("Cancelled the removal of permission {$permission->getPermission()} for this session: Event cancelled");
-            return;
-        }
-
         unset($this->permissions[array_search($permission, $this->permissions)]);
         $this->permissions = array_values($this->permissions);
         $this->reloadPermissions();
@@ -279,9 +277,12 @@ final class Session {
         if ($this->attachment === null) return;
         $this->debug("Reloading permissions");
         $this->attachment->clearPermissions();
-        foreach ($this->currentGroup->getGroup()->getPermissions() as $permission) $this->attachment->setPermission(new Permission($permission), true);
+
+        foreach ($this->currentGroup->getGroup()->getGrantedPermissions() as $permission) $this->attachment->setPermission(new Permission($permission), true);
+        foreach ($this->currentGroup->getGroup()->getRevokedPermissions() as $permission) $this->attachment->setPermission(new Permission($permission), false);
+
         foreach ($this->permissions as $permission) {
-            if (!$permission->hasExpired()) $this->attachment->setPermission(new Permission($permission->getPermission()), true);
+            if (!$permission->hasExpired()) $this->attachment->setPermission(new Permission($permission->getPermission()), $permission->isGranted());
             else $this->removePermission($permission);
         }
     }

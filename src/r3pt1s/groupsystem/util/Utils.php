@@ -49,6 +49,29 @@ final class Utils {
         return $result;
     }
 
+    public static function parsePermissionString(string $permString): array {
+        $expireDate = null;
+        $granted = true;
+        $stringParts = explode("#", $permString);
+
+        if (($grantedPart = strtolower(trim($stringParts[array_key_last($stringParts)]))) == "true" || $grantedPart == "false") {
+            $granted = ($grantedPart == "true");
+            unset($stringParts[array_key_last($stringParts)]);
+            $stringParts = array_values($stringParts);
+        }
+
+        $expireDatePart = trim($stringParts[array_key_last($stringParts)]);
+        if (isTimeString($expireDatePart, $expireDateObject)) {
+            $expireDate = $expireDateObject;
+            unset($stringParts[array_key_last($stringParts)]);
+            $stringParts = array_values($stringParts);
+        }
+
+        $permission = implode("#", $stringParts);
+
+        return [$permission, $expireDate, $granted];
+    }
+
     public static function diffString(DateTime $target, DateTime $object, bool $asTimeString = false): string {
         $diff = $target->diff($object);
         $result = [];

@@ -77,7 +77,7 @@ final class ManageGroupsForm extends MenuForm {
                     }
                     ));
                 } else if ($data == 2) {
-                    $groups = array_values(array_map(function(Group $group): string { return $group->getColorCode() . $group->getName(); }, GroupManager::getInstance()->getGroups()));
+                    $groups = array_values(array_map(fn(Group $group) => $group->getColorCode() . $group->getName(), GroupManager::getInstance()->getGroups()));
                     $player->sendForm(new CustomForm(
                         Message::EDIT_GROUP_UI_TITLE(),
                         [
@@ -139,5 +139,10 @@ final class ManageGroupsForm extends MenuForm {
                 $player->sendForm(new MainForm());
             }
         );
+    }
+
+    private function buildEditGroupForm(): MenuForm {
+        // Form to select whether you want to edit the group's metadata or their permissions
+        return new MenuForm("", "", [], function (Player $player, int $data): void {});
     }
 }
