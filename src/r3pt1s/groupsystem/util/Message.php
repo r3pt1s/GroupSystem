@@ -33,6 +33,7 @@ use r3pt1s\groupsystem\GroupSystem;
  * @method static Message GROUP_DOESNT_EXISTS()
  * @method static Message GROUP_ALREADY_EXISTS()
  * @method static Message GROUPS_RELOADED()
+ * @method static Message GROUPS_RELOAD_FAILED()
  * @method static Message PERMISSION_ADDED()
  * @method static Message PERMISSION_REMOVED()
  * @method static Message PROVIDE_PERMISSION()
@@ -88,18 +89,7 @@ use r3pt1s\groupsystem\GroupSystem;
  * @method static Message DELETE_GROUP_UI_TITLE()
  * @method static Message DELETE_GROUP_UI_CHOOSE_GROUP()
  * @method static Message EDIT_GROUP_CHOOSE_UI_TITLE()
- * @method static Message EDIT_GROUP_UI_TEXT()
- * @method static Message EDIT_GROUP_UI_CHOOSE_GROUP()
- * @method static Message EDIT_GROUP_UI_NAME_TAG()
- * @method static Message EDIT_GROUP_UI_DISPLAYNAME()
- * @method static Message EDIT_GROUP_UI_COLOR_CODE()
- * @method static Message EDIT_GROUP_UI_CHATFORMAT()
- * @method static Message EDIT_GROUP_UI_PERMISSIONS()
- * @method static Message SEE_AVAILABLE_GROUPS_UI_TITLE()
- * @method static Message SEE_AVAILABLE_GROUPS_UI_TEXT()
- * @method static Message SEE_AVAILABLE_GROUP_TITLE()
- * @method static Message SEE_AVAILABLE_GROUP_TEXT()
- * @method static Message SEE_AVAILABLE_GROUP_BACK()
+ * @method static Message EDIT_GROUP_UI_TITLE()
  */
 final class Message {
     use RegistryTrait;
@@ -132,6 +122,7 @@ final class Message {
         self::_registryRegister("group_doesnt_exists", new self("group_doesnt_exists"));
         self::_registryRegister("group_already_exists", new self("group_already_exists"));
         self::_registryRegister("groups_reloaded", new self("groups_reloaded"));
+        self::_registryRegister("groups_reload_failed", new self("groups_reload_failed"));
         self::_registryRegister("permission_added", new self("permission_added"));
         self::_registryRegister("permission_removed", new self("permission_removed"));
         self::_registryRegister("provide_permission", new self("provide_permission"));
@@ -187,18 +178,6 @@ final class Message {
         self::_registryRegister("delete_group_ui_title", new self("delete_group_ui_title"));
         self::_registryRegister("delete_group_ui_choose_group", new self("delete_group_ui_choose_group"));
         self::_registryRegister("edit_group_choose_ui_title", new self("edit_group_choose_ui_title"));
-        self::_registryRegister("edit_group_ui_text", new self("edit_group_ui_text"));
-        self::_registryRegister("edit_group_ui_choose_group", new self("edit_group_ui_choose_group"));
-        self::_registryRegister("edit_group_ui_name_tag", new self("edit_group_ui_nametag"));
-        self::_registryRegister("edit_group_ui_displayname", new self("edit_group_ui_displayname"));
-        self::_registryRegister("edit_group_ui_color_code", new self("edit_group_ui_colorcode"));
-        self::_registryRegister("edit_group_ui_chatformat", new self("edit_group_ui_chatformat"));
-        self::_registryRegister("edit_group_ui_permissions", new self("edit_group_ui_permissions"));
-        self::_registryRegister("see_available_groups_ui_title", new self("see_available_groups_ui_title"));
-        self::_registryRegister("see_available_groups_ui_text", new self("see_available_groups_ui_text"));
-        self::_registryRegister("see_available_group_title", new self("see_available_group_title"));
-        self::_registryRegister("see_available_group_text", new self("see_available_group_text"));
-        self::_registryRegister("see_available_group_back", new self("see_available_group_back"));
     }
 
     public function __construct(private readonly string $key) {}

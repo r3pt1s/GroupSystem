@@ -33,8 +33,8 @@ final class GroupFormManager {
             ->button(Message::MANAGE_GROUPS_UI_SEE_GROUPS(), clickClosure: fn(Player $player) => $player->sendForm(self::seeGroupsForm()))
             ->button(Message::MANAGE_GROUPS_UI_RELOAD_GROUPS(), clickClosure: function (Player $player): void {
                 GroupManager::getInstance()->reload()->onCompletion(
-                    fn() => $player->sendForm(self::mainForm("§7Reloaded the gorups.")),
-                    fn() => $player->sendForm(self::mainForm("§cFailed to reload the groups"))
+                    fn() => $player->sendForm(self::mainForm(Message::GROUPS_RELOADED())),
+                    fn() => $player->sendForm(self::mainForm(Message::GROUPS_RELOAD_FAILED()))
                 );
             })
             ->build();
@@ -75,7 +75,7 @@ final class GroupFormManager {
             ->title(Message::EDIT_GROUP_CHOOSE_UI_TITLE());
 
         foreach (GroupManager::getInstance()->getGroups() as $group) {
-            $builder->button($group->getFancyName() . ($group->isDefault() ? " §8(§eD§8)" : ""), clickClosure: fn(Player $player) => $player->sendForm(self::editGroupForm($group)));
+            $builder->button($group->getFancyName() . ($group->isDefault() ? " §8(§l§cD§r§8)" : ""), clickClosure: fn(Player $player) => $player->sendForm(self::editGroupForm($group)));
         }
 
         $builder->onCancel(fn(Player $player) => $player->sendForm(self::mainForm()));
@@ -93,7 +93,7 @@ final class GroupFormManager {
         $finalContent .= "§7DefaultGroup?: " . ($group->isDefault() ? "§aYes" : "§cNo");
 
         return MenuFormBuilder::create()
-            ->title($group->getFancyName())
+            ->title(Message::EDIT_GROUP_UI_TITLE())
             ->body($finalContent)
             ->button("§bEdit Metadata", clickClosure: fn(Player $player) => $player->sendForm(self::editGroupMetadataForm($group)))
             ->button("§eEdit Permissions", clickClosure: fn(Player $player) => $player->sendForm(self::editGroupPermissionsForm($group)))

@@ -5,7 +5,7 @@ Manage permissions and ranks of the players!
 ## Features
 - **Full-Custom** Messages
 - **Temp**-Ranks
-- **Temp**-Permissions
+- **Temp**-Permissions (including negative permissions -> negative means a certain permission is revoked for a group or player)
 - **Custom** Paths
 - **ScoreHud** Support
 - **Update** Checker

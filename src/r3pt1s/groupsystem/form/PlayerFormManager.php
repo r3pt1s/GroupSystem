@@ -148,7 +148,7 @@ final class PlayerFormManager {
             ->title("§eView permissions")
             ->button("§aGrant", clickClosure: fn(Player $player) => $player->sendForm(self::editPlayerPermissionsGrantForm($username)))
             ->button("§cRevoke", clickClosure: fn(Player $player) => $player->sendForm(self::editPlayerPermissionsRevokeForm($username)))
-            ->button("§4Remove", clickClosure: fn(Player $player) => $player->sendForm(self::editPlayerPermissionsRemoveForm($username)))
+            ->button("§4Remove", clickClosure: fn(Player $player) => $player->sendForm(self::editPlayerPermissionsRemoveForm($username, $permissions)))
             ->divider();
 
         if (count($permissions) == 0) {
@@ -157,7 +157,7 @@ final class PlayerFormManager {
             usort($permissions, fn(PlayerPermission $a, PlayerPermission $b) => $a->isGranted() <=> $b->isRevoked());
             /** @var array<PlayerPermission> $permissions */
             foreach ($permissions as $permission) {
-                $builder->button("§" . ($permission->isGranted() ? "a" : "c") . $permission->getPermission() . "\n§e" . ($permission->getExpireDate() === null ? (string) Message::RAW_NEVER() : Utils::diffString(new DateTime(), $permission->getExpireDate(), 2)), clickClosure: fn(Player $player) => $player->sendForm(self::editSpecificPermission($username, $permission)));
+                $builder->button("§" . ($permission->isGranted() ? "a" : "c") . $permission->getPermission() . "\n§e" . ($permission->getExpireDate() === null ? (string) Message::RAW_NEVER() : Utils::diffString(new DateTime(), $permission->getExpireDate(), false, 2)), clickClosure: fn(Player $player) => $player->sendForm(self::editSpecificPermission($username, $permission)));
             }
         }
 
@@ -250,14 +250,17 @@ final class PlayerFormManager {
         return $builder->build();
     }
 
-    public static function editPlayerPermissionsRemoveForm(string $username): CustomForm {
+    public static function editPlayerPermissionsRemoveForm(string $username, array $permissions): CustomForm {
         $builder = CustomFormBuilder::create()
             ->useRealValues()
             ->title("§4Remove Permissions")
             ->label("§7This removes either an granted or revoked permission completely from this group's permission list.");
 
+        $permissions = array_map(fn(PlayerPermission $permission) => $permission->getPermission(), $permissions);
         for ($i = 0; $i < 20; $i++) {
-            $builder->input("perm_" . $i, "§7Permission " . ($i + 1));
+            if (isset($permissions[$i])) {
+                $builder->dropdown("perm_" . $i, "§7Permission " . ($i + 1), $permissions, $i);
+            } else $builder->input("perm_" . $i, "§7Permission " . ($i + 1));
         }
 
         $builder->onSubmit(function (Player $player, CustomFormResponse $response) use($username): void {

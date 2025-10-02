@@ -224,7 +224,6 @@ final class MySQLProvider implements Provider {
             $permissions = array_map(fn(PlayerPermission $permission) => $permission->write(), $permissions);
         }
 
-        var_dump($permissions);
         $this->connector->executeChange("player.updatePermissions", [
             "username" => $username, "permissions" => json_encode(array_values($permissions))
         ]);

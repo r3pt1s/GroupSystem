@@ -94,10 +94,11 @@ final class GroupSystem extends PluginBase {
             "group_doesnt_exists" => "§cThe group §e{%0} §cdoesn't exists!",
             "group_already_exists" => "§cThe group §e{%0} §calready exists!",
             "groups_reloaded" => "§7The groups were reloaded!",
+            "groups_reload_failed" => "§cFailed to reload the groups.",
             "permission_added" => "§7The permission §e{%1} §7was added to the player §e{%0}§7!",
             "permission_removed" => "§7The permission §e{%1} §7was removed from the player §e{%0}§7!",
             "provide_permission" => "§cPlease provide a permission!",
-            "provide_group_name" => "§cPlease provice a group name!",
+            "provide_group_name" => "§cPlease provide a group name!",
             "player_has_no_groups" => "§7The player §e{%0} §7has §cno groups§7!",
             "group_skipped" => "§7The group of the player §e{%0} §7was skipped!",
             "main_ui_title" => "§cGroupSystem",
@@ -147,19 +148,7 @@ final class GroupSystem extends PluginBase {
             "create_group_ui_permissions" => "§7Permissions of the Group §8(§cSeperated by §e;§8)",
             "delete_group_ui_title" => "§cRemove group",
             "delete_group_ui_choose_group" => "§7Choose a group",
-            "edit_group_ui_title" => "§eEdit group",
-            "edit_group_ui_text" => "§l§cLeave a field blank for no changes!",
-            "edit_group_ui_choose_group" => "§7Choose a group",
-            "edit_group_ui_nametag" => "§7New NameTag §8(§e{name} §8= §7Player§8)",
-            "edit_group_ui_displayname" => "§7New DisplayName §8(§e{name} §8= §7Player§8)",
-            "edit_group_ui_colorcode" => "§7New ColorCode §8(§7Example: §ePARAGRAPH+4 §8= §4DARK_RED§8)",
-            "edit_group_ui_chatformat" => "§7New ChatFormat §8(§e{name} §8= §7Player§8, §e{msg} §8= §7Message§8)",
-            "edit_group_ui_permissions" => "§7New Permissions §8(§cSeperated by §e;§8)",
-            "see_available_groups_ui_title" => "§6See groups",
-            "see_available_groups_ui_text" => "§e{%0} groups §7are available!{line}§cClick on a group for information!",
-            "see_available_group_title" => "§e{%0}",
-            "see_available_group_text" => "§7Name: §e{%0}{line}§r§7NameTag: §e{%1}{line}§r§7DisplayName: §e{%2}{line}§r§7ChatFormat: §e{%3}{line}§r§7Permissions:{line}§e{%4}",
-            "see_available_group_back" => "§4Back"
+            "edit_group_ui_title" => "§eEdit group"
         ];
 
         $this->messageConfig = new Config(Configuration::getInstance()->getMessagesPath() . "messages.yml", 2, $messages);

@@ -31,8 +31,20 @@ final class GroupManager {
         $resolver = new PromiseResolver();
         GroupSystem::getInstance()->getProvider()->getAllGroups()->onCompletion(function(array $groups) use($resolver): void {
             $this->groups = $groups;
-            $resolver->resolve($this->groups);
             $this->createDefaults();
+
+            $sortedGroupList = [];
+            foreach (Configuration::getInstance()->getGroupHierarchy() as $groupName) {
+                if (($group = $this->getGroup($groupName)) !== null) {
+                    $sortedGroupList[$group->getName()] = $group;
+                }
+            }
+
+            if (!empty($sortedGroupList)) {
+                $this->groups = $sortedGroupList;
+            }
+
+            $resolver->resolve($this->groups);
         }, function() use($resolver): void {
             $resolver->reject();
             GroupSystem::getInstance()->getLogger()->warning("§cFailed to fetch groups");
@@ -116,8 +128,9 @@ final class GroupManager {
     }
 
     public function reload(): Promise {
+        Configuration::getInstance()->getConfig()->reload();
+        Configuration::getInstance()->load();
         $provider = GroupSystem::getInstance()->getProvider();
-        $this->groups = [];
         if ($provider instanceof YAMLProvider || $provider instanceof JSONProvider) $provider->getFile()?->reload();
         return $this->load();
     }

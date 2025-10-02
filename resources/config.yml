@@ -31,3 +31,13 @@ Messages-Path: default
 # How much time a player session has to retrieve its data before it gets kicked
 # Default: 5 (in seconds)
 Session-Timeout: 5
+# This defines the group hierarchy.
+# If the list is empty, the actual order from configs and databases is used.
+# if a group was left out it gets put at the end of the hierarchy.
+# Example:
+# Group-Hierarchy:
+#  - Owner
+#  - Admin
+#  - Developer
+#  - Player
+Group-Hierarchy: []

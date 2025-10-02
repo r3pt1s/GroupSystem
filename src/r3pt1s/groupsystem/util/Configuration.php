@@ -29,6 +29,7 @@ final class Configuration {
     private string $playersPath;
     private string $messagesPath;
     private int $sessionTimeout = 5;
+    private array $groupHierarchy = [];
 
     public function __construct(Config $config) {
         self::setInstance($this);
@@ -74,9 +75,31 @@ final class Configuration {
             else $this->messagesPath = GroupSystem::getInstance()->getDataFolder();
         } else $this->messagesPath = GroupSystem::getInstance()->getDataFolder();
 
-        if ($this->config->exists("SessionTimeout")) {
+        if ($this->config->exists("Session-Timeout")) {
             if (is_numeric($this->config->get("Session-Timeout", $this))) $this->sessionTimeout = intval($this->config->get("Session-Timeout", $this->sessionTimeout));
             if ($this->sessionTimeout <= 0) $this->sessionTimeout = 5;
+        } else {
+            $this->config->set("Session-Timeout", $this->sessionTimeout);
+            try {
+                $this->config->save();
+            } catch (JsonException $e) {
+                GroupSystem::getInstance()->getLogger()->error("§cFailed to save session timeout.");
+                GroupSystem::getInstance()->getLogger()->logException($e);
+            }
+        }
+
+        if ($this->config->exists("Group-Hierarchy")) {
+            try {
+                $this->groupHierarchy = $this->config->get("Group-Hierarchy", $this->groupHierarchy);
+            } catch (Exception) {}
+        } else {
+            $this->config->set("Group-Hierarchy", $this->groupHierarchy);
+            try {
+                $this->config->save();
+            } catch (JsonException $e) {
+                GroupSystem::getInstance()->getLogger()->error("§cFailed to save group hierarchy.");
+                GroupSystem::getInstance()->getLogger()->logException($e);
+            }
         }
     }
 
@@ -129,5 +152,9 @@ final class Configuration {
 
     public function getSessionTimeout(): int {
         return $this->sessionTimeout;
+    }
+
+    public function getGroupHierarchy(): array {
+        return $this->groupHierarchy;
     }
 }
