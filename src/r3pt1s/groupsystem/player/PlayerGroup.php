@@ -18,7 +18,7 @@ final class PlayerGroup {
     ) {}
 
     public function hasExpired(): bool {
-        if ($this->expireDate instanceof DateTime) return $this->expireDate <= new DateTime("now");
+        if ($this->expireDate instanceof DateTime) return $this->expireDate <= new DateTime();
         return false;
     }
 
@@ -37,7 +37,7 @@ final class PlayerGroup {
     public function toRemainingGroup(): PlayerRemainingGroup {
         return new PlayerRemainingGroup(
             $this->group,
-            ($this->expireDate === null ? null : Utils::diffString(new DateTime("now"), $this->expireDate, true))
+            ($this->expireDate === null ? null : Utils::diffString(new DateTime(), $this->expireDate, true))
         );
     }
 
@@ -56,7 +56,7 @@ final class PlayerGroup {
         ]);
 
         if ($data["expire"] == "0000-00-00 00:00:00") unset($data["expire"]);
-        if (($group = GroupManager::getInstance()->getGroupByName($data["group"])) !== null) {
+        if (($group = GroupManager::getInstance()->getGroup($data["group"])) !== null) {
             try {
                 return new self(
                     $group,

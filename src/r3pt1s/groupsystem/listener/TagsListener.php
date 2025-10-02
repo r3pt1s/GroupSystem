@@ -33,7 +33,7 @@ final class TagsListener implements Listener {
                 break;
             case "groupsystem.group.expire":
                 $expireString = (string) Message::RAW_NEVER();
-                if ($group->getExpireDate() instanceof DateTime) $expireString = Utils::diffString(new DateTime("now"), $group->getExpireDate());
+                if ($group->getExpireDate() instanceof DateTime) $expireString = Utils::diffString(new DateTime(), $group->getExpireDate());
                 $tag->setValue($expireString);
                 break;
         }
@@ -44,31 +44,29 @@ final class TagsListener implements Listener {
         $group = $event->getGroup();
 
         $expireString = (string) Message::RAW_NEVER();
-        if ($group->getExpireDate() instanceof DateTime) $expireString = Utils::diffString(new DateTime("now"), $group->getExpireDate());
+        if ($group->getExpireDate() instanceof DateTime) $expireString = Utils::diffString(new DateTime(), $group->getExpireDate());
 
         if ($player !== null) {
-            $ev = new PlayerTagsUpdateEvent(
+            (new PlayerTagsUpdateEvent(
                 $player,
                 [
                     new ScoreTag("groupsystem.group", $group->getGroup()->getColorCode() . $group->getGroup()->getName()),
                     new ScoreTag("groupsystem.group.name", $group->getGroup()->getName()),
                     new ScoreTag("groupsystem.group.expire", $expireString)
                 ]
-            );
-            $ev->call();
+            ))->call();
         }
     }
 
     public function onEdit(GroupEditEvent $event): void {
-        $group = $event->getGroup();
+        $group = $event->getNewGroupData();
 
         foreach (array_filter(SessionManager::getInstance()->getSessions(), fn(Session $session) => $session->isInitialized() && $session->getPlayer() !== null) as $session) {
             if ($session->getGroup()->getGroup()->getName() == $group->getName()) {
-                $ev = new PlayerTagsUpdateEvent(
+                (new PlayerTagsUpdateEvent(
                     $session->getPlayer(),
-                    [new ScoreTag("groupsystem.group", $event->getNewData()["colorCode"] . $group->getName())]
-                );
-                $ev->call();
+                    [new ScoreTag("groupsystem.group", $event->getNewGroupData()->getColorCode() . $group->getName())]
+                ))->call();
             }
         }
     }
@@ -79,15 +77,14 @@ final class TagsListener implements Listener {
 
         foreach (array_filter(SessionManager::getInstance()->getSessions(), fn(Session $session) => $session->isInitialized() && $session->getPlayer() !== null) as $session) {
             if ($session->getGroup()->getGroup()->getName() == $group->getName()) {
-                $ev = new PlayerTagsUpdateEvent(
+                (new PlayerTagsUpdateEvent(
                     $session->getPlayer(),
                     [
                         new ScoreTag("groupsystem.group", $default->getColorCode() . $default->getName()),
                         new ScoreTag("groupsystem.group.name", $default->getName()),
                         new ScoreTag("groupsystem.group.expire", Message::RAW_NEVER())
                     ]
-                );
-                $ev->call();
+                ))->call();
             }
         }
     }

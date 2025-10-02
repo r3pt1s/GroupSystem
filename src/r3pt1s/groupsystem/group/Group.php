@@ -3,6 +3,7 @@
 namespace r3pt1s\groupsystem\group;
 
 use JetBrains\PhpStorm\ArrayShape;
+use r3pt1s\groupsystem\util\Configuration;
 use r3pt1s\groupsystem\util\Utils;
 
 final class Group {
@@ -30,7 +31,7 @@ final class Group {
         $grantedPermissions = [];
         $revokedPermissions = [];
         foreach ($this->permissions as $permissionString) {
-            [$permission, $expireDate, $granted] = Utils::parsePermissionString($permissionString);
+            [$permission, , $granted] = Utils::parsePermissionString($permissionString);
             if ($granted) $grantedPermissions[] = $permission;
             else $revokedPermissions[] = $permission;
         }
@@ -46,18 +47,26 @@ final class Group {
             "display_name" => $this->displayName,
             "chat_format" => $this->chatFormat,
             "color_code" => $this->colorCode,
-            "permissions" => $this->permissions
+            "permissions" => json_encode($this->permissions)
         ];
     }
 
     /** @internal */
-    public function apply(array $data): void {
-        $this->nameTag = $data["name_tag"];
-        $this->displayName = $data["display_name"];
-        $this->chatFormat = $data["chat_format"];
-        $this->colorCode = $data["color_code"];
+    public function apply(Group|array $data): void {
+        if ($data instanceof Group) {
+            $this->nameTag = $data->getNameTag();
+            $this->displayName = $data->getDisplayName();
+            $this->chatFormat = $data->getChatFormat();
+            $this->colorCode = $data->getColorCode();
+            $this->permissions = $data->getPermissions();
+        } else {
+            $this->nameTag = $data["name_tag"];
+            $this->displayName = $data["display_name"];
+            $this->chatFormat = $data["chat_format"];
+            $this->colorCode = $data["color_code"];
+            $this->permissions = $data["permissions"];
+        }
 
-        $this->permissions = $data["permissions"];
         $this->resortPermissions();
     }
 
@@ -65,20 +74,50 @@ final class Group {
         return $this->name;
     }
 
+    public function getFancyName(): string {
+        return $this->colorCode . $this->name;
+    }
+
+    public function setNameTag(string $nameTag): Group {
+        $this->nameTag = $nameTag;
+        return $this;
+    }
+
     public function getNameTag(): string {
         return $this->nameTag;
+    }
+
+    public function setDisplayName(string $displayName): Group {
+        $this->displayName = $displayName;
+        return $this;
     }
 
     public function getDisplayName(): string {
         return $this->displayName;
     }
 
+    public function setChatFormat(string $chatFormat): Group {
+        $this->chatFormat = $chatFormat;
+        return $this;
+    }
+
     public function getChatFormat(): string {
         return $this->chatFormat;
     }
 
+    public function setColorCode(string $colorCode): Group {
+        $this->colorCode = $colorCode;
+        return $this;
+    }
+
     public function getColorCode(): string {
         return $this->colorCode;
+    }
+
+    public function setPermissions(array $permissions): Group {
+        $this->permissions = $permissions;
+        $this->resortPermissions();
+        return $this;
     }
 
     public function getPermissions(): array {
@@ -97,6 +136,20 @@ final class Group {
         $index = array_search($this->getName(), array_keys(GroupManager::getInstance()->getGroups()));
         $indexTwo = array_search($group->getName(), array_keys(GroupManager::getInstance()->getGroups()));
         return $index < $indexTwo;
+    }
+
+    public function isLower(Group $group): bool {
+        return !$this->isHigher($group);
+    }
+
+    public function isEquals(Group $group): bool {
+        $index = array_search($this->getName(), array_keys(GroupManager::getInstance()->getGroups()));
+        $indexTwo = array_search($group->getName(), array_keys(GroupManager::getInstance()->getGroups()));
+        return $index == $indexTwo;
+    }
+
+    public function isDefault(): bool {
+        return Configuration::getInstance()->getDefaultGroup() == $this->name;
     }
 
     #[ArrayShape(["name" => "string", "display_name" => "string", "name_tag" => "string", "chat_format" => "string", "color_code" => "string", "permissions" => "array"])] public function write(): array {

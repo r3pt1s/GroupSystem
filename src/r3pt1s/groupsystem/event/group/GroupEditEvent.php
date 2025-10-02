@@ -14,20 +14,15 @@ final class GroupEditEvent extends Event implements Cancellable {
     use CancellableTrait;
 
     public function __construct(
-        private readonly Group $group,
-        private readonly array $oldData,
-        private readonly array $newData
+        private readonly Group $oldGroupData,
+        private readonly Group $newGroupData
     ) {}
 
-    public function getGroup(): Group {
-        return $this->group;
+    public function getOldGroupData(): Group {
+        return $this->oldGroupData;
     }
 
-    public function getOldData(): array {
-        return $this->oldData;
-    }
-
-    public function getNewData(): array {
-        return $this->newData;
+    public function getNewGroupData(): Group {
+        return $this->newGroupData;
     }
 }

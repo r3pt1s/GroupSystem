@@ -19,6 +19,7 @@ use r3pt1s\groupsystem\GroupSystem;
  * @method static Message UPDATER_ERROR()
  * @method static Message UPDATER_UP_TO_DATE()
  * @method static Message NO_PERM()
+ * @method static Message COMMAND_DESCRIPTION_GROUP()
  * @method static Message GROUP_CHANGED()
  * @method static Message PLAYER_NOT_FOUND()
  * @method static Message GROUP_ADDED()
@@ -39,6 +40,7 @@ use r3pt1s\groupsystem\GroupSystem;
  * @method static Message PLAYER_HAS_NO_GROUPS()
  * @method static Message GROUP_SKIPPED()
  * @method static Message MAIN_UI_TITLE()
+ * @method static Message MAIN_UI_TEXT()
  * @method static Message MAIN_UI_MANAGE_PLAYERS()
  * @method static Message MAIN_UI_MANAGE_GROUPS()
  * @method static Message SELECT_PLAYER_UI_TITLE()
@@ -51,7 +53,7 @@ use r3pt1s\groupsystem\GroupSystem;
  * @method static Message MANAGE_PLAYERS_UI_SEE_GROUPS()
  * @method static Message MANAGE_PLAYERS_UI_UPDATE_PERMISSION()
  * @method static Message MANAGE_PLAYERS_UI_REMOVE_PERMISSION()
- * @method static Message MANAGE_PLAYERS_UI_SEE_PERMISSIONS()
+ * @method static Message MANAGE_PLAYERS_UI_VIEW_PERMISSIONS()
  * @method static Message MANAGE_PLAYERS_UI_BACK()
  * @method static Message ADD_GROUP_UI_TITLE()
  * @method static Message ADD_GROUP_UI_CHOOSE_GROUP()
@@ -82,9 +84,10 @@ use r3pt1s\groupsystem\GroupSystem;
  * @method static Message CREATE_GROUP_UI_COLOR_CODE()
  * @method static Message CREATE_GROUP_UI_CHATFORMAT()
  * @method static Message CREATE_GROUP_UI_PERMISSIONS()
+ * @method static Message CREATE_GROUP_UI_PERMISSIONS_TIP()
  * @method static Message DELETE_GROUP_UI_TITLE()
  * @method static Message DELETE_GROUP_UI_CHOOSE_GROUP()
- * @method static Message EDIT_GROUP_UI_TITLE()
+ * @method static Message EDIT_GROUP_CHOOSE_UI_TITLE()
  * @method static Message EDIT_GROUP_UI_TEXT()
  * @method static Message EDIT_GROUP_UI_CHOOSE_GROUP()
  * @method static Message EDIT_GROUP_UI_NAME_TAG()
@@ -115,6 +118,7 @@ final class Message {
         self::_registryRegister("updater_error", new self("updater_error"));
         self::_registryRegister("updater_up_to_date", new self("updater_uptodate"));
         self::_registryRegister("no_perm", new self("no_perm"));
+        self::_registryRegister("command_description_group", new self("command_description_group"));
         self::_registryRegister("group_changed", new self("group_changed"));
         self::_registryRegister("player_not_found", new self("player_not_found"));
         self::_registryRegister("group_added", new self("group_added"));
@@ -135,6 +139,7 @@ final class Message {
         self::_registryRegister("player_has_no_groups", new self("player_has_no_groups"));
         self::_registryRegister("group_skipped", new self("group_skipped"));
         self::_registryRegister("main_ui_title", new self("main_ui_title"));
+        self::_registryRegister("main_ui_text", new self("main_ui_text"));
         self::_registryRegister("main_ui_manage_players", new self("main_ui_manage_players"));
         self::_registryRegister("main_ui_manage_groups", new self("main_ui_manage_groups"));
         self::_registryRegister("select_player_ui_title", new self("select_player_ui_title"));
@@ -145,9 +150,9 @@ final class Message {
         self::_registryRegister("manage_players_ui_remove_group", new self("manage_players_ui_remove_group"));
         self::_registryRegister("manage_players_ui_skip_group", new self("manage_players_ui_skip_group"));
         self::_registryRegister("manage_players_ui_see_groups", new self("manage_players_ui_see_groups"));
-        self::_registryRegister("manage_players_ui_add_permission", new self("manage_players_ui_add_permission"));
+        self::_registryRegister("manage_players_ui_update_permission", new self("manage_players_ui_update_permission"));
         self::_registryRegister("manage_players_ui_remove_permission", new self("manage_players_ui_remove_permission"));
-        self::_registryRegister("manage_players_ui_see_permissions", new self("manage_players_ui_see_permissions"));
+        self::_registryRegister("manage_players_ui_view_permissions", new self("manage_players_ui_view_permissions"));
         self::_registryRegister("manage_players_ui_back", new self("manage_players_ui_back"));
         self::_registryRegister("add_group_ui_title", new self("add_group_ui_title"));
         self::_registryRegister("add_group_ui_choose_group", new self("add_group_ui_choose_group"));
@@ -178,9 +183,10 @@ final class Message {
         self::_registryRegister("create_group_ui_color_code", new self("create_group_ui_colorcode"));
         self::_registryRegister("create_group_ui_chatformat", new self("create_group_ui_chatformat"));
         self::_registryRegister("create_group_ui_permissions", new self("create_group_ui_permissions"));
+        self::_registryRegister("create_group_ui_permissions_tip", new self("create_group_ui_permissions_tip"));
         self::_registryRegister("delete_group_ui_title", new self("delete_group_ui_title"));
         self::_registryRegister("delete_group_ui_choose_group", new self("delete_group_ui_choose_group"));
-        self::_registryRegister("edit_group_ui_title", new self("edit_group_ui_title"));
+        self::_registryRegister("edit_group_choose_ui_title", new self("edit_group_choose_ui_title"));
         self::_registryRegister("edit_group_ui_text", new self("edit_group_ui_text"));
         self::_registryRegister("edit_group_ui_choose_group", new self("edit_group_ui_choose_group"));
         self::_registryRegister("edit_group_ui_name_tag", new self("edit_group_ui_nametag"));

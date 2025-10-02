@@ -72,7 +72,7 @@ final class YAMLProvider implements Provider {
         return $resolver->getPromise();
     }
 
-    public function getGroupByName(string $name): Promise {
+    public function getGroup(string $name): Promise {
         $resolver = new PromiseResolver();
 
         if ($this->file->exists($name) && ($group = Group::read($this->file->get($name, []))) !== null) {
@@ -218,40 +218,18 @@ final class YAMLProvider implements Provider {
         return $resolver->getPromise();
     }
 
-    public function updatePermission(string $username, PlayerPermission $permission): void {
-        $permissions = $this->getPermissions($username);
-        $permissions->onCompletion(function(array $permissions) use($username, $permission): void {
-            foreach ($permissions as $i => $actualPermission) {
-                if (str_contains($actualPermission, $permission->getPermission())) {
-                    unset($permissions[$i]);
-                }
-            }
+    public function updatePermissions(string $username, array $permissions): void {
+        if (current($permissions) instanceof PlayerPermission) {
+            $permissions = array_map(fn(PlayerPermission $permission) => $permission->write(), $permissions);
+        }
 
-            $permissions = array_values($permissions);
-            $permissions[] = $permission->write();
-            $file = $this->getPlayerFile($username);
-            $file->set("permissions", $permissions);
-            try {
-                $file->save();
-            } catch (JsonException $e) {
-                GroupSystem::getInstance()->getLogger()->logException($e);
-            }
-        }, function(): void {});
-    }
-
-    public function removePermission(string $username, PlayerPermission|string $permission): void {
-        $permissions = $this->getPermissions($username);
-        $permissions->onCompletion(function(array $permissions) use($username, $permission): void {
-            $permission = $permission instanceof PlayerPermission ? $permission->write() : $permission;
-            if (in_array($permission, $permissions)) unset($permissions[array_search($permission, $permissions)]);
-            $file = $this->getPlayerFile($username);
-            $file->set("permissions", array_values($permissions));
-            try {
-                $file->save();
-            } catch (JsonException $e) {
-                GroupSystem::getInstance()->getLogger()->logException($e);
-            }
-        }, function(): void {});
+        $file = $this->getPlayerFile($username);
+        $file->set("permissions", array_values($permissions));
+        try {
+            $file->save();
+        } catch (JsonException $e) {
+            GroupSystem::getInstance()->getLogger()->logException($e);
+        }
     }
 
     public function getPermissions(string $username, bool $asInstance = false): Promise {

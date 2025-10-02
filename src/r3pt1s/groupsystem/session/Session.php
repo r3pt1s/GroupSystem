@@ -3,6 +3,7 @@
 namespace r3pt1s\groupsystem\session;
 
 use Closure;
+use DateTime;
 use pocketmine\permission\DefaultPermissions;
 use pocketmine\permission\Permission;
 use pocketmine\permission\PermissionAttachment;
@@ -10,9 +11,11 @@ use pocketmine\player\Player;
 use pocketmine\Server;
 use PrefixedLogger;
 use r3pt1s\groupsystem\event\player\PlayerGroupAddEvent;
+use r3pt1s\groupsystem\event\player\PlayerGroupRemoveEvent;
 use r3pt1s\groupsystem\event\player\PlayerGroupSetEvent;
 use r3pt1s\groupsystem\event\player\PlayerGroupSkipEvent;
 use r3pt1s\groupsystem\event\player\PlayerPermissionGrantEvent;
+use r3pt1s\groupsystem\event\player\PlayerPermissionRemoveEvent;
 use r3pt1s\groupsystem\event\player\PlayerPermissionRevokeEvent;
 use r3pt1s\groupsystem\event\player\PlayerUpdateEvent;
 use r3pt1s\groupsystem\group\Group;
@@ -23,10 +26,10 @@ use r3pt1s\groupsystem\player\PlayerGroup;
 use r3pt1s\groupsystem\player\PlayerRemainingGroup;
 use r3pt1s\groupsystem\util\BatchPromise;
 use r3pt1s\groupsystem\util\Configuration;
+use r3pt1s\groupsystem\util\Message;
+use r3pt1s\groupsystem\util\Utils;
 
 final class Session {
-
-    # todo: revamp this mess wth
 
     private PrefixedLogger $logger;
     private int $creationTick;
@@ -54,7 +57,7 @@ final class Session {
         })->failure(fn() => $this->failed = true);
     }
 
-    public function debug(string $message, array $params = [], bool $force = false): void {
+    public function debug(string $message, array $params = [], bool $force = true): void {
         $finalMessage = sprintf($message, ...$params);
         if ($force) $this->logger->notice($finalMessage);
         else $this->logger->debug($finalMessage);
@@ -129,6 +132,12 @@ final class Session {
             return;
         }
 
+        if (($player = Server::getInstance()->getPlayerExact($group->getName())) !== null) {
+            $expireString = (string) Message::RAW_NEVER();
+            if ($group->getExpireDate() instanceof DateTime) $expireString = Utils::diffString(new DateTime(), $group->getExpireDate());
+            $player->sendMessage(Message::GROUP_CHANGED()->parse([$group->getGroup()->getColorCode() . $group->getGroup()->getName(), $expireString]));
+        }
+
         $this->currentGroup = $group;
         $this->update();
     }
@@ -161,7 +170,7 @@ final class Session {
 
     public function removeGroup(PlayerRemainingGroup|Group $group, ?Closure $completion = null): void {
         $this->debug("Removing group %s", [$group->getName()]);
-        ($ev = new PlayerGroupAddEvent($this->username, $group))->call();
+        ($ev = new PlayerGroupRemoveEvent($this->username, $group))->call();
         if ($ev->isCancelled()) {
             $this->logger->notice("Cancelled the removal of the group {$group->getName()} from this session: Event cancelled");
             return;
@@ -172,9 +181,9 @@ final class Session {
                 $group = $group instanceof PlayerRemainingGroup ? $group->getName() : $group->getName();
                 if ($canRemove && isset($this->groups[$group])) {
                     unset($this->groups[$group]);
-                    $this->debug("Removed group %s", $group);
+                    $this->debug("Removed group %s", [$group]);
                 } else {
-                    $this->debug("Failed to remove group %s", $group);
+                    $this->debug("Failed to remove group %s", [$group]);
                 }
 
                 if ($completion !== null) $completion($canRemove);
@@ -191,12 +200,12 @@ final class Session {
         return isset($this->groups[$group]);
     }
 
-    public function nextGroup(): void {
+    public function nextGroup(): bool {
         $this->debug("Skipping current group");
         ($ev = new PlayerGroupSkipEvent($this->username, $this->currentGroup, $this->getNextHighestGroup() ?? GroupManager::getInstance()->getDefaultGroup()))->call();
         if ($ev->isCancelled()) {
             $this->logger->notice("Cancelled the skip of current group for this session: Event cancelled");
-            return;
+            return false;
         }
 
         if (count($this->groups) == 0) {
@@ -211,6 +220,7 @@ final class Session {
                 $this->setGroup(new PlayerGroup(GroupManager::getInstance()->getDefaultGroup(), null));
             }
         }
+        return true;
     }
 
     public function getNextHighestGroup(): ?PlayerRemainingGroup {
@@ -223,40 +233,71 @@ final class Session {
         return $groups[0] ?? null;
     }
 
-    public function updatePermission(PlayerPermission $permission): void {
-        $this->debug("Updating permission %s", [$permission->getPermission()]);
-        foreach ($this->permissions as $i => $actualPermission) {
-            if ($actualPermission->getPermission() == $permission->getPermission()) {
-                unset($this->permissions[$i]);
+    public function updatePermission(PlayerPermission ...$permissions): array {
+        $changed = false;
+        $results = [];
+        foreach ($permissions as $i => $permission) {
+            $this->debug("Updating permission %s (%s)", [$permission->getPermission(), ($permission->isGranted() ? "granted" : "revoked")]);
+            foreach ($this->permissions as $iAP => $actualPermission) {
+                if ($actualPermission->getPermission() == $permission->getPermission()) {
+                    unset($this->permissions[$iAP]);
+                }
             }
+
+            $this->permissions = array_values($this->permissions);
+
+            if ($permission->isGranted()) ($ev = new PlayerPermissionGrantEvent($this->username, $permission))->call();
+            else ($ev = new PlayerPermissionRevokeEvent($this->username, $permission))->call();
+            if ($ev->isCancelled()) {
+                $this->logger->notice("Cancelled the update (" . ($permission->isGranted() ? "granted" : "revoked") . ") of permission {$permission->getPermission()} for this session: Event cancelled");
+                $results[] = [$i, false];
+                continue;
+            }
+
+            $changed = true;
+            $this->permissions[] = $permission;
+            $results[] = [$i, true];
         }
 
-        $this->permissions = array_values($this->permissions);
-
-        GroupSystem::getInstance()->getProvider()->updatePermission($this->username, $permission);
-        if ($permission->isGranted()) ($ev = new PlayerPermissionGrantEvent($this->username, $permission))->call();
-        else ($ev = new PlayerPermissionRevokeEvent($this->username, $permission))->call();
-        if ($ev->isCancelled()) {
-            $this->logger->notice("Cancelled the addition of permission {$permission->getPermission()} for this session: Event cancelled");
-            return;
+        if ($changed) {
+            $this->reloadPermissions();
+            GroupSystem::getInstance()->getProvider()->updatePermissions($this->username, $this->permissions);
         }
 
-        $this->permissions[] = $permission;
-        $this->reloadPermissions();
+        return $results;
     }
 
-    public function removePermission(PlayerPermission|string $permission): void {
-        $permission = $permission instanceof PlayerPermission ? $permission : ($this->getPermission($permission) ?? PlayerPermission::read($permission));
-        $this->debug("Removing permission %s", [$permission->getPermission()]);
-        if (!in_array($permission, $this->permissions)) {
-            $this->debug("Failed to remove permission %s", [$permission->getPermission()]);
-            return;
+    public function removePermission(PlayerPermission|string ...$permissions): array {
+        $changed = false;
+        $results = [];
+        foreach ($permissions as $i => $permission) {
+            $permission = $permission instanceof PlayerPermission ? $permission : ($this->getPermission($permission) ?? PlayerPermission::read($permission));
+            $this->debug("Removing permission %s", [$permission->getPermission()]);
+            if (!in_array($permission, $this->permissions)) {
+                $this->debug("Failed to remove permission %s due to it being non-existent, ignoring...", [$permission->getPermission()]);
+                $results[] = [$i, false];
+                continue;
+            }
+
+            ($ev = new PlayerPermissionRemoveEvent($this->username, $permission))->call();
+            if ($ev->isCancelled()) {
+                $this->logger->notice("Cancelled the removal of permission {$permission->getPermission()} for this session: Event cancelled");
+                $results[] = [$i, false];
+                continue;
+            }
+
+            $changed = true;
+            unset($this->permissions[array_search($permission, $this->permissions)]);
+            $this->permissions = array_values($this->permissions);
+            $results[] = [$i, true];
         }
 
-        GroupSystem::getInstance()->getProvider()->removePermission($this->username, $permission);
-        unset($this->permissions[array_search($permission, $this->permissions)]);
-        $this->permissions = array_values($this->permissions);
-        $this->reloadPermissions();
+        if ($changed) {
+            $this->reloadPermissions();
+            GroupSystem::getInstance()->getProvider()->updatePermissions($this->username, $this->permissions);
+        }
+
+        return $results;
     }
 
     public function update(): void {
@@ -281,10 +322,13 @@ final class Session {
         foreach ($this->currentGroup->getGroup()->getGrantedPermissions() as $permission) $this->attachment->setPermission(new Permission($permission), true);
         foreach ($this->currentGroup->getGroup()->getRevokedPermissions() as $permission) $this->attachment->setPermission(new Permission($permission), false);
 
+        $removalPerms = [];
         foreach ($this->permissions as $permission) {
             if (!$permission->hasExpired()) $this->attachment->setPermission(new Permission($permission->getPermission()), $permission->isGranted());
-            else $this->removePermission($permission);
+            else $removalPerms[] = $permission;
         }
+
+        $this->removePermission(...$removalPerms);
     }
 
     public function tick(): void {

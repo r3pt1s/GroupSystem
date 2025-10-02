@@ -3,6 +3,7 @@
 namespace r3pt1s\groupsystem\util;
 
 use Exception;
+use JsonException;
 use pocketmine\utils\Config;
 use pocketmine\utils\SingletonTrait;
 use r3pt1s\groupsystem\GroupSystem;
@@ -76,6 +77,17 @@ final class Configuration {
         if ($this->config->exists("SessionTimeout")) {
             if (is_numeric($this->config->get("Session-Timeout", $this))) $this->sessionTimeout = intval($this->config->get("Session-Timeout", $this->sessionTimeout));
             if ($this->sessionTimeout <= 0) $this->sessionTimeout = 5;
+        }
+    }
+
+    public function setDefaultGroup(string $defaultGroup): void {
+        $this->defaultGroup = $defaultGroup;
+        $this->config->set("Default-Group", $defaultGroup);
+        try {
+            $this->config->save();
+        } catch (JsonException $e) {
+            GroupSystem::getInstance()->getLogger()->error("§cFailed to save default group.");
+            GroupSystem::getInstance()->getLogger()->logException($e);
         }
     }
 

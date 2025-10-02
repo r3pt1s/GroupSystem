@@ -13,8 +13,12 @@ final class PlayerPermission {
         private readonly bool $granted = true
     ) {}
 
+    public function reverseGranting(): PlayerPermission {
+        return new self($this->permission, $this->expireDate, !$this->granted);
+    }
+
     public function hasExpired(): bool {
-        if ($this->expireDate instanceof DateTime) return $this->expireDate <= new DateTime("now");
+        if ($this->expireDate instanceof DateTime) return $this->expireDate <= new DateTime();
         return false;
     }
 
@@ -35,7 +39,7 @@ final class PlayerPermission {
     }
 
     public function write(): string {
-        if ($this->expireDate === null) return $this->permission;
+        if ($this->expireDate === null) return $this->permission . ($this->granted ? "" : "#false");
         return $this->permission . "#" . $this->expireDate->format("Y-m-d H:i:s") . ($this->granted ? "" : "#false");
     }
 

@@ -2,24 +2,20 @@
 
 namespace r3pt1s\groupsystem\listener;
 
-use DateTime;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerChatEvent;
 use pocketmine\event\player\PlayerDisplayNameChangeEvent;
 use pocketmine\event\player\PlayerJoinEvent;
 use pocketmine\event\player\PlayerLoginEvent;
 use pocketmine\event\player\PlayerQuitEvent;
+use pocketmine\event\server\DataPacketSendEvent;
+use pocketmine\network\mcpe\protocol\AvailableCommandsPacket;
 use pocketmine\player\chat\LegacyRawChatFormatter;
 use pocketmine\scheduler\ClosureTask;
 use pocketmine\Server;
-use r3pt1s\groupsystem\event\group\GroupEditEvent;
-use r3pt1s\groupsystem\event\group\GroupRemoveEvent;
-use r3pt1s\groupsystem\event\player\PlayerGroupSetEvent;
 use r3pt1s\groupsystem\GroupSystem;
 use r3pt1s\groupsystem\session\Session;
 use r3pt1s\groupsystem\session\SessionManager;
-use r3pt1s\groupsystem\util\Message;
-use r3pt1s\groupsystem\util\Utils;
 
 final class EventListener implements Listener {
 
@@ -67,27 +63,10 @@ final class EventListener implements Listener {
         ));
     }
 
-    public function onSet(PlayerGroupSetEvent $event): void {
-        $player = Server::getInstance()->getPlayerExact($event->getUsername());
-        if ($player !== null) {
-            $expireString = (string) Message::RAW_NEVER();
-            if ($event->getGroup()->getExpireDate() instanceof DateTime) $expireString = Utils::diffString(new DateTime("now"), $event->getGroup()->getExpireDate());
-            $player->sendMessage(Message::GROUP_CHANGED()->parse([$event->getGroup()->getGroup()->getColorCode() . $event->getGroup()->getGroup()->getName(), $expireString]));
-        }
-    }
-
-    public function onRemove(GroupRemoveEvent $event): void {
-        foreach (array_filter(SessionManager::getInstance()->getSessions(), fn(Session $session) => $session->isInitialized() && $session->getPlayer() !== null) as $session) {
-            if ($session->getGroup()->getGroup()->getName() == $event->getGroup()->getName()) {
-                $session->nextGroup();
-            }
-        }
-    }
-
-    public function onEdit(GroupEditEvent $event): void {
-        foreach (array_filter(SessionManager::getInstance()->getSessions(), fn(Session $session) => $session->isInitialized() && $session->getPlayer() !== null) as $session) {
-            if ($session->getGroup()->getGroup()->getName() == $event->getGroup()->getName()) {
-                $session->update();
+    public function onDataPacketSend(DataPacketSendEvent $event): void {
+        foreach ($event->getPackets() as $packet) {
+            if ($packet instanceof AvailableCommandsPacket) {
+                $packet->commandData["group"]->overloads = [];
             }
         }
     }

@@ -23,7 +23,7 @@ final class GroupInfoCommand extends Command implements PluginOwned {
         if ($sender instanceof Player) {
             $currentGroup = Session::get($sender)->getGroup();
             $expireString = (string) Message::RAW_NEVER();
-            if ($currentGroup->getExpireDate() instanceof DateTime) $expireString = Utils::diffString(new DateTime("now"), $currentGroup->getExpireDate());
+            if ($currentGroup->getExpireDate() instanceof DateTime) $expireString = Utils::diffString(new DateTime(), $currentGroup->getExpireDate());
             $sender->sendMessage(Message::GROUP_INFO()->parse([$currentGroup->getGroup()->getColorCode() . $currentGroup->getGroup()->getName(), $expireString]));
         }
         return true;

@@ -61,7 +61,7 @@ final class MySQLProvider implements Provider {
         return $resolver->getPromise();
     }
 
-    public function getGroupByName(string $name): Promise {
+    public function getGroup(string $name): Promise {
         $resolver = new PromiseResolver();
 
         $this->connector->executeSelect("groups.get", [
@@ -109,7 +109,7 @@ final class MySQLProvider implements Provider {
             "username" => $username,
             "group" => $customData["group"] ?? GroupManager::getInstance()->getDefaultGroup()->getName(),
             "expire" => $customData["expire"] ?? null,
-            "groups" => json_encode($customData["permissions"] ?? []),
+            "groups" => json_encode($customData["groups"] ?? []),
             "permissions" => json_encode($customData["permissions"] ?? []),
         ], fn() => $completion(true), fn(SqlError $error) => $completion(false));
     }
@@ -219,33 +219,15 @@ final class MySQLProvider implements Provider {
         return $resolver->getPromise();
     }
 
-    public function updatePermission(string $username, PlayerPermission $permission): void {
-        $permissions = $this->getPermissions($username);
-        $permissions->onCompletion(function(array $permissions) use($username, $permission): void {
-            foreach ($permissions as $i => $actualPermission) {
-                if (str_contains($actualPermission, $permission->getPermission())) {
-                    unset($permissions[$i]);
-                }
-            }
+    public function updatePermissions(string $username, array $permissions): void {
+        if (current($permissions) instanceof PlayerPermission) {
+            $permissions = array_map(fn(PlayerPermission $permission) => $permission->write(), $permissions);
+        }
 
-            $permissions = array_values($permissions);
-            $permissions[] = $permission->write();
-
-            $this->connector->executeChange("player.updatePermissions", [
-                "username" => $username, "permissions" => json_encode($permissions)
-            ]);
-        }, function(): void {});
-    }
-
-    public function removePermission(string $username, PlayerPermission|string $permission): void {
-        $permissions = $this->getPermissions($username);
-        $permissions->onCompletion(function(array $permissions) use($username, $permission): void {
-            $permission = $permission instanceof PlayerPermission ? $permission->write() : $permission;
-            if (in_array($permission, $permissions)) unset($permissions[array_search($permission, $permissions)]);
-            $this->connector->executeChange("player.updatePermissions", [
-                "username" => $username, "permissions" => json_encode(array_values($permissions))
-            ]);
-        }, function(): void {});
+        var_dump($permissions);
+        $this->connector->executeChange("player.updatePermissions", [
+            "username" => $username, "permissions" => json_encode(array_values($permissions))
+        ]);
     }
 
     public function getPermissions(string $username, bool $asInstance = false): Promise {

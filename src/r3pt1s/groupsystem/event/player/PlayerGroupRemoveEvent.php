@@ -5,6 +5,7 @@ namespace r3pt1s\groupsystem\event\player;
 use pocketmine\event\Cancellable;
 use pocketmine\event\CancellableTrait;
 use pocketmine\event\Event;
+use r3pt1s\groupsystem\group\Group;
 use r3pt1s\groupsystem\player\PlayerRemainingGroup;
 
 /**
@@ -15,14 +16,14 @@ final class PlayerGroupRemoveEvent extends Event implements Cancellable {
 
     public function __construct(
         private readonly string $username,
-        private readonly PlayerRemainingGroup $group
+        private readonly PlayerRemainingGroup|Group $group
     ) {}
 
     public function getUsername(): string {
         return $this->username;
     }
 
-    public function getGroup(): PlayerRemainingGroup {
+    public function getGroup(): PlayerRemainingGroup|Group {
         return $this->group;
     }
 }

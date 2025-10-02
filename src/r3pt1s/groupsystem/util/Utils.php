@@ -61,7 +61,7 @@ final class Utils {
         }
 
         $expireDatePart = trim($stringParts[array_key_last($stringParts)]);
-        if (isTimeString($expireDatePart, $expireDateObject)) {
+        if (self::isTimeString($expireDatePart, $expireDateObject)) {
             $expireDate = $expireDateObject;
             unset($stringParts[array_key_last($stringParts)]);
             $stringParts = array_values($stringParts);
@@ -72,7 +72,7 @@ final class Utils {
         return [$permission, $expireDate, $granted];
     }
 
-    public static function diffString(DateTime $target, DateTime $object, bool $asTimeString = false): string {
+    public static function diffString(DateTime $target, DateTime $object, bool $asTimeString = false, int $limit = -1): string {
         $diff = $target->diff($object);
         $result = [];
         if ($diff->y > 0) $result[] = $diff->y . ($asTimeString ? "y" : " " . Message::RAW_YEAR());
@@ -81,6 +81,7 @@ final class Utils {
         if ($diff->h > 0) $result[] = $diff->h . ($asTimeString ? "h" : " " . Message::RAW_HOUR());
         if ($diff->i > 0) $result[] = $diff->i . ($asTimeString ? "M" : " " . Message::RAW_MINUTE());
         if ($diff->s > 0) $result[] = $diff->s . ($asTimeString ? "s" : " " . Message::RAW_SECOND());
+        if ($limit > 0) $result = array_slice($result, 0, $limit);
         if (count($result) > 0) {
             return implode(($asTimeString ? "" : ", "), $result);
         } else {

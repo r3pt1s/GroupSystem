@@ -6,8 +6,8 @@ projects:
   GroupSystem:
     path: ""
     libs:
-      - src: dktapps-pm-pl/pmforms/pmforms
-        version: ^2.1.0
+      - src: r3pt1s/BetterForms/BetterForms
+        version: 1.0.0
       - src: poggit/libasynql/libasynql
-        version: ^4.1.6
+        version: ^4.2.3
 ...

@@ -2,7 +2,8 @@
 
 namespace r3pt1s\groupsystem\group;
 
-use JetBrains\PhpStorm\Pure;
+use pocketmine\promise\Promise;
+use pocketmine\promise\PromiseResolver;
 use pocketmine\utils\SingletonTrait;
 use r3pt1s\groupsystem\event\group\GroupCreateEvent;
 use r3pt1s\groupsystem\event\group\GroupEditEvent;
@@ -10,6 +11,8 @@ use r3pt1s\groupsystem\event\group\GroupRemoveEvent;
 use r3pt1s\groupsystem\GroupSystem;
 use r3pt1s\groupsystem\provider\impl\JSONProvider;
 use r3pt1s\groupsystem\provider\impl\YAMLProvider;
+use r3pt1s\groupsystem\session\Session;
+use r3pt1s\groupsystem\session\SessionManager;
 use r3pt1s\groupsystem\util\Configuration;
 
 final class GroupManager {
@@ -22,15 +25,20 @@ final class GroupManager {
         self::setInstance($this);
 
         $this->load();
-        $this->createDefaults();
     }
 
-    private function load(): void {
-        GroupSystem::getInstance()->getProvider()->getAllGroups()->onCompletion(function(array $groups): void {
+    private function load(): Promise {
+        $resolver = new PromiseResolver();
+        GroupSystem::getInstance()->getProvider()->getAllGroups()->onCompletion(function(array $groups) use($resolver): void {
             $this->groups = $groups;
-        }, function(): void {
+            $resolver->resolve($this->groups);
+            $this->createDefaults();
+        }, function() use($resolver): void {
+            $resolver->reject();
             GroupSystem::getInstance()->getLogger()->warning("§cFailed to fetch groups");
         });
+
+        return $resolver->getPromise();
     }
 
     public function createGroup(Group $group): void {
@@ -55,41 +63,51 @@ final class GroupManager {
         }
 
         if (isset($this->groups[$group->getName()])) unset($this->groups[$group->getName()]);
+
+        foreach (array_filter(SessionManager::getInstance()->getSessions(), fn(Session $session) => $session->isInitialized() && $session->getPlayer() !== null) as $session) {
+            if ($session->getGroup()->getGroup()->getName() == $group->getName()) {
+                $session->nextGroup();
+            }
+        }
     }
 
     public function editGroup(Group $group, string $nameTag, string $displayName, string $chatFormat, string $colorCode, array $permissions): void {
-        ($ev = new GroupEditEvent(
-            $group,
-            ["nameTag" => $group->getNameTag(), "displayName" => $group->getDisplayName(), "chatFormat" => $group->getChatFormat(), "colorCode" => $group->getColorCode(), "permissions" => $group->getPermissions()],
-            ["nameTag" => $nameTag, "displayName" => $displayName, "chatFormat" => $chatFormat, "colorCode" => $colorCode, "permissions" => $permissions]
-        ))->call();
+        $oldGroupData = clone $group;
+        $newGroupData = clone $group;
+        $newGroupData->setNameTag($nameTag)
+            ->setDisplayName($displayName)
+            ->setChatFormat($chatFormat)
+            ->setColorCode($colorCode)
+            ->setPermissions($permissions);
+
+        ($ev = new GroupEditEvent($oldGroupData, $newGroupData))->call();
         if ($ev->isCancelled()) {
             GroupSystem::getInstance()->getLogger()->notice("Cancelled the editing of group {$group->getName()}: Event cancelled");
             return;
         }
 
-        $group->apply([
-            "name_tag" => $nameTag, "display_name" => $displayName, "chat_format" => $chatFormat, "color_code" => $colorCode, "permissions" => $permissions
-        ]);
-
-        GroupSystem::getInstance()->getProvider()->editGroup($group, array_merge(["name" => $group->getName()], [
-            "name_tag" => $nameTag, "display_name" => $displayName, "chat_format" => $chatFormat, "color_code" => $colorCode, "permissions" => $permissions
-        ]));
+        $group->apply($ev->getNewGroupData());
+        GroupSystem::getInstance()->getProvider()->editGroup($group, $group->write());
+        foreach (array_filter(SessionManager::getInstance()->getSessions(), fn(Session $session) => $session->isInitialized() && $session->getPlayer() !== null) as $session) {
+            if ($session->getGroup()->getGroup()->getName() == $group->getName()) {
+                $session->update();
+            }
+        }
     }
 
     private function createDefaults(): void {
-        if (!$this->isGroupExisting(Configuration::getInstance()->getDefaultGroup())) $this->createGroup(new Group(Configuration::getInstance()->getDefaultGroup()));
+        if (!$this->checkGroup(Configuration::getInstance()->getDefaultGroup())) $this->createGroup(new Group(Configuration::getInstance()->getDefaultGroup()));
     }
 
-    #[Pure] public function getGroupByName(string $name): ?Group {
+    public function getGroup(string $name): ?Group {
         return $this->groups[$name] ?? null;
     }
 
     public function getDefaultGroup(): ?Group {
-        return $this->getGroupByName(Configuration::getInstance()->getDefaultGroup());
+        return $this->getGroup(Configuration::getInstance()->getDefaultGroup());
     }
 
-    public function isGroupExisting(string $name): bool {
+    public function checkGroup(string $name): bool {
         return isset($this->groups[$name]);
     }
 
@@ -97,10 +115,10 @@ final class GroupManager {
         return $this->groups;
     }
 
-    public function reload(): void {
+    public function reload(): Promise {
         $provider = GroupSystem::getInstance()->getProvider();
         $this->groups = [];
         if ($provider instanceof YAMLProvider || $provider instanceof JSONProvider) $provider->getFile()?->reload();
-        $this->load();
+        return $this->load();
     }
 }

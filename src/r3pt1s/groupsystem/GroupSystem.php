@@ -22,8 +22,6 @@ use r3pt1s\groupsystem\util\Configuration;
 final class GroupSystem extends PluginBase {
     use SingletonTrait;
 
-    //todo: revamp permission system (add permission and remove (added) permission to -> grant & revoke permission)
-
     private Configuration $configuration;
     private Provider $provider;
     private GroupManager $groupManager;
@@ -82,6 +80,7 @@ final class GroupSystem extends PluginBase {
             "updater_error" => "{PREFIX}§cAn error has occurred! Disabling the plugin...",
             "updater_uptodate" => "{PREFIX}§aYour version of §e'GroupSystem' §ais up to date!",
             "no_perm" => "{PREFIX}§cYou don't have the permission to use this command!",
+            "command.description.group" => "Manage the groups",
             "group_changed" => "{PREFIX}Your group was changed to §e{%0}§7!{line}{PREFIX}Expires in: §e{%1}",
             "player_not_found" => "§cThe player §e{%0} §7wasn't found!",
             "group_added" => "§7The group §e{%0} §7was added to the player §e{%1}§7!",
@@ -102,6 +101,7 @@ final class GroupSystem extends PluginBase {
             "player_has_no_groups" => "§7The player §e{%0} §7has §cno groups§7!",
             "group_skipped" => "§7The group of the player §e{%0} §7was skipped!",
             "main_ui_title" => "§cGroupSystem",
+            "main_ui_text" => "§7There are currently §e{%0} group(s) §aavailable§8: §e{%1}",
             "main_ui_manage_players" => "§cManage Players",
             "main_ui_manage_groups" => "§cManage Groups",
             "select_player_ui_title" => "§7Provide a player",

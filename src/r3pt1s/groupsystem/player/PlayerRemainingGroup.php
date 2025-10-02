@@ -49,7 +49,7 @@ final class PlayerRemainingGroup {
             "string", "NULL|string"
         ]);
 
-        if (($group = GroupManager::getInstance()->getGroupByName($data["group"])) !== null) {
+        if (($group = GroupManager::getInstance()->getGroup($data["group"])) !== null) {
             return new self(
                 $group,
                 is_string(($data["time"] ?? null)) ? $data["time"] : null
