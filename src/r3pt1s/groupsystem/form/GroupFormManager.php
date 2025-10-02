@@ -46,11 +46,13 @@ final class GroupFormManager {
             ->label(Message::CREATE_GROUP_UI_TEXT())
             ->input("name", Message::CREATE_GROUP_UI_NAME(), "Admin")
             ->input("nameTag", Message::CREATE_GROUP_UI_NAME_TAG())
-            ->input("displayName", Message::CREATE_GROUP_UI_NAME_TAG())
-            ->input("colorCode", Message::CREATE_GROUP_UI_NAME_TAG())
-            ->input("chatFormat", Message::CREATE_GROUP_UI_NAME_TAG())
+            ->input("displayName", Message::CREATE_GROUP_UI_DISPLAYNAME())
+            ->input("colorCode", Message::CREATE_GROUP_UI_COLOR_CODE())
+            ->input("chatFormat", Message::CREATE_GROUP_UI_CHATFORMAT())
             ->divider()
-            ->label(Message::CREATE_GROUP_UI_PERMISSIONS_TIP())
+            ->label("§cPermissions are seperated by §e;§8. §cExample: §7perm1§e;§7perm2")
+            ->label("§cPermissions can also include a §e# §cto define whether the permission is granted or not. §8(§e#true §8-> §aGranted §8(§cby default§8), §e#false §8-> §cRevoked§8)")
+            ->label("§cExample: §7perm1#false §8-> '§eperm1§8' §7is §crevoked")
             ->input("permissions", Message::CREATE_GROUP_UI_PERMISSIONS())
             ->onSubmit(function (Player $player, CustomFormResponse $response): void {
                 $name = TextFormat::clean(trim($response->getString("name")));
@@ -67,12 +69,13 @@ final class GroupFormManager {
                     } else $player->sendForm(self::mainForm(Message::GROUP_ALREADY_EXISTS()->parse([$name])));
                 } else $player->sendForm(self::mainForm(Message::PROVIDE_GROUP_NAME()));
             })
+            ->onCancel(fn(Player $player) => $player->sendForm(self::mainForm()))
             ->build();
     }
     
     public static function editGroupChooseForm(): MenuForm {
         $builder = MenuFormBuilder::create()
-            ->title(Message::EDIT_GROUP_CHOOSE_UI_TITLE());
+            ->title("§cChoose group");
 
         foreach (GroupManager::getInstance()->getGroups() as $group) {
             $builder->button($group->getFancyName() . ($group->isDefault() ? " §8(§l§cD§r§8)" : ""), clickClosure: fn(Player $player) => $player->sendForm(self::editGroupForm($group)));
@@ -93,7 +96,7 @@ final class GroupFormManager {
         $finalContent .= "§7DefaultGroup?: " . ($group->isDefault() ? "§aYes" : "§cNo");
 
         return MenuFormBuilder::create()
-            ->title(Message::EDIT_GROUP_UI_TITLE())
+            ->title("§eEdit group")
             ->body($finalContent)
             ->button("§bEdit Metadata", clickClosure: fn(Player $player) => $player->sendForm(self::editGroupMetadataForm($group)))
             ->button("§eEdit Permissions", clickClosure: fn(Player $player) => $player->sendForm(self::editGroupPermissionsForm($group)))

@@ -88,7 +88,7 @@ final class PlayerFormManager {
                     }
                 });
             })
-            ->button(Message::MANAGE_PLAYERS_UI_VIEW_PERMISSIONS(), clickClosure: fn(Player $player) => $player->sendForm(self::viewPlayerPermissionsForm($username, $permissions)))
+            ->button(Message::MANAGE_PLAYERS_UI_SEE_PERMISSIONS(), clickClosure: fn(Player $player) => $player->sendForm(self::viewPlayerPermissionsForm($username, $permissions)))
             ->button(Message::MANAGE_PLAYERS_UI_BACK(), clickClosure: fn(Player $player) => $player->sendForm(GroupFormManager::mainForm()))
             ->build();
     }

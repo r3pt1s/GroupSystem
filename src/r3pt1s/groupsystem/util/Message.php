@@ -54,7 +54,7 @@ use r3pt1s\groupsystem\GroupSystem;
  * @method static Message MANAGE_PLAYERS_UI_SEE_GROUPS()
  * @method static Message MANAGE_PLAYERS_UI_UPDATE_PERMISSION()
  * @method static Message MANAGE_PLAYERS_UI_REMOVE_PERMISSION()
- * @method static Message MANAGE_PLAYERS_UI_VIEW_PERMISSIONS()
+ * @method static Message MANAGE_PLAYERS_UI_SEE_PERMISSIONS()
  * @method static Message MANAGE_PLAYERS_UI_BACK()
  * @method static Message ADD_GROUP_UI_TITLE()
  * @method static Message ADD_GROUP_UI_CHOOSE_GROUP()
@@ -88,8 +88,6 @@ use r3pt1s\groupsystem\GroupSystem;
  * @method static Message CREATE_GROUP_UI_PERMISSIONS_TIP()
  * @method static Message DELETE_GROUP_UI_TITLE()
  * @method static Message DELETE_GROUP_UI_CHOOSE_GROUP()
- * @method static Message EDIT_GROUP_CHOOSE_UI_TITLE()
- * @method static Message EDIT_GROUP_UI_TITLE()
  */
 final class Message {
     use RegistryTrait;
@@ -143,7 +141,7 @@ final class Message {
         self::_registryRegister("manage_players_ui_see_groups", new self("manage_players_ui_see_groups"));
         self::_registryRegister("manage_players_ui_update_permission", new self("manage_players_ui_update_permission"));
         self::_registryRegister("manage_players_ui_remove_permission", new self("manage_players_ui_remove_permission"));
-        self::_registryRegister("manage_players_ui_view_permissions", new self("manage_players_ui_view_permissions"));
+        self::_registryRegister("manage_players_ui_see_permissions", new self("manage_players_ui_see_permissions"));
         self::_registryRegister("manage_players_ui_back", new self("manage_players_ui_back"));
         self::_registryRegister("add_group_ui_title", new self("add_group_ui_title"));
         self::_registryRegister("add_group_ui_choose_group", new self("add_group_ui_choose_group"));
@@ -177,7 +175,6 @@ final class Message {
         self::_registryRegister("create_group_ui_permissions_tip", new self("create_group_ui_permissions_tip"));
         self::_registryRegister("delete_group_ui_title", new self("delete_group_ui_title"));
         self::_registryRegister("delete_group_ui_choose_group", new self("delete_group_ui_choose_group"));
-        self::_registryRegister("edit_group_choose_ui_title", new self("edit_group_choose_ui_title"));
     }
 
     public function __construct(private readonly string $key) {}
