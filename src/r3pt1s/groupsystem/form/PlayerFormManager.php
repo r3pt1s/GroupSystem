@@ -43,9 +43,9 @@ final class PlayerFormManager {
                             Session::get($finalPlayer)->onLoad(function() use($finalPlayer, $player): void {
                                 $player->sendForm(self::playerViewMainForm($finalPlayer));
                             });
-                        }
+                        } else $player->sendForm(GroupFormManager::mainForm(Message::PLAYER_NOT_FOUND()->parse([$finalPlayer])));
                     },
-                    fn() => $player->sendForm(GroupFormManager::mainForm(Message::PLAYER_NOT_FOUND()->parse([$finalPlayer, $playerSelectionChoice])))
+                    fn() => $player->sendForm(GroupFormManager::mainForm(Message::PLAYER_NOT_FOUND()->parse([$finalPlayer])))
                 );
             })
             ->build();

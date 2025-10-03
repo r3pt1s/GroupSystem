@@ -66,6 +66,7 @@ final class EventListener implements Listener {
     public function onDataPacketSend(DataPacketSendEvent $event): void {
         foreach ($event->getPackets() as $packet) {
             if ($packet instanceof AvailableCommandsPacket) {
+                if (!isset($packet->commandData["group"])) continue;
                 $packet->commandData["group"]->overloads = [];
             }
         }

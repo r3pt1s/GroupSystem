@@ -63,6 +63,7 @@ final class GroupManager {
             }
 
             $this->groups[$group->getName()] = $group;
+            Configuration::getInstance()->addGroupToHierarchy($group->getName());
         }
     }
 

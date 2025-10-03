@@ -114,6 +114,19 @@ final class Configuration {
         }
     }
 
+    public function addGroupToHierarchy(string $group): void {
+        if (empty($this->groupHierarchy)) return;
+        if (in_array($group, $this->groupHierarchy)) return;
+        $this->groupHierarchy[] = $group;
+        $this->config->set("Group-Hierarchy", $this->groupHierarchy);
+        try {
+            $this->config->save();
+        } catch (JsonException $e) {
+            GroupSystem::getInstance()->getLogger()->error("§cFailed to save group hierarchy.");
+            GroupSystem::getInstance()->getLogger()->logException($e);
+        }
+    }
+
     public function getConfig(): Config {
         return $this->config;
     }

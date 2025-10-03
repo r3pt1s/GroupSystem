@@ -56,11 +56,12 @@ final class GroupFormManager {
             ->input("permissions", Message::CREATE_GROUP_UI_PERMISSIONS())
             ->onSubmit(function (Player $player, CustomFormResponse $response): void {
                 $name = TextFormat::clean(trim($response->getString("name")));
-                $nameTag = $response->getString("nameTag");
-                $displayName = $response->getString("displayName");
-                $colorCode = $response->getString("colorCode");
-                $chatFormat = $response->getString("chatFormat");
-                $permissions = explode(";", $response->getString("permissions"));
+                $nameTag = trim($response->getString("nameTag"));
+                $displayName = trim($response->getString("displayName"));
+                $colorCode = trim($response->getString("colorCode"));
+                $chatFormat = trim($response->getString("chatFormat"));
+                $permissionsString = trim($response->getString("permissions"));
+                $permissions = $permissionsString === "" ? [] : explode(";", $permissionsString);
 
                 if ($name !== "") {
                     if (!GroupManager::getInstance()->checkGroup($name)) {
@@ -241,10 +242,13 @@ final class GroupFormManager {
         $builder = CustomFormBuilder::create()
             ->useRealValues()
             ->title("§4Remove Permissions")
-            ->label("§7This removes either an granted or revoked permission completely from this group's permission list.");
+            ->label("§7This removes either a granted or revoked permission completely from this group's permission list.");
 
+        $permissions = array_values(array_merge($group->getGrantedPermissions(), $group->getRevokedPermissions()));
         for ($i = 0; $i < 20; $i++) {
-            $builder->dropdown("perm_" . $i, "§7Permission " . ($i + 1));
+            if (isset($permissions[$i])) {
+                $builder->dropdown("perm_" . $i, "§7Permission " . ($i + 1), $permissions, $i);
+            } else $builder->input("perm_" . $i, "§7Permission " . ($i + 1));
         }
 
         $builder->onSubmit(function (Player $player, CustomFormResponse $response) use($group): void {
@@ -289,7 +293,7 @@ final class GroupFormManager {
     public static function removeGroupForm(): MenuForm {
         $builder = MenuFormBuilder::create()
             ->title("§cRemove Group")
-            ->body("§7Tip: §cYou can't remove the default group.");
+            ->body("§cYou can't remove the default group.");
 
         foreach (GroupManager::getInstance()->getGroups() as $group) {
             if (!$group->isDefault()) {
