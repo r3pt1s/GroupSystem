@@ -57,7 +57,7 @@ final class Session {
         })->failure(fn() => $this->failed = true);
     }
 
-    public function debug(string $message, array $params = [], bool $force = true): void {
+    public function debug(string $message, array $params = [], bool $force = false): void {
         $finalMessage = sprintf($message, ...$params);
         if ($force) $this->logger->notice($finalMessage);
         else $this->logger->debug($finalMessage);
