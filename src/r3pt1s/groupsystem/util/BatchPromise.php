@@ -40,6 +40,7 @@ final class BatchPromise {
 
     public function reject(): void {
         if ($this->resolved || $this->rejected) return;
+        $this->rejections++;
 
         if (($this->acceptations + $this->rejections) == $this->requiredAcceptations) {
             $this->rejected = true;
